@@ -1,12 +1,12 @@
 import poker
 
+
 class CardDescription:
     """一手有效出牌的描述"""
+
     def __init__(self, pattern=0, weight=0):
         self.pattern = pattern
         self.weight = weight
-
-
 
 
 """
@@ -27,22 +27,22 @@ patterns_four_pairs = list(range(708, 721, 8))
 patterns_grand_bomb = [2]
 patterns_bombs = list(range(4, 21, 4))
 
-_patterns_all = patterns_grand_bomb + patterns_bombs +\
-               patterns_single + patterns_single_straight + \
-               patterns_pair + patterns_pair_straight + \
-               patterns_triple + patterns_triple_single + patterns_triple_pair + \
-               patterns_four_two + patterns_four_pairs
+_patterns_all = patterns_grand_bomb + patterns_bombs + \
+                patterns_single + patterns_single_straight + \
+                patterns_pair + patterns_pair_straight + \
+                patterns_triple + patterns_triple_single + patterns_triple_pair + \
+                patterns_four_two + patterns_four_pairs
 
 _patterns_text = [(patterns_grand_bomb, '王炸'),
-                 ([4], '炸弹'),
-                 (list(range(8, 21, 4)), '连炸'),
-                 (patterns_single, '*'),
-                 (patterns_single_straight, '顺子'),
-                 (patterns_pair, '对*'),
-                 (patterns_pair_straight, '连对'),
-                 ([303], "三个*"),
-                 ([404], '三带一'), ([505], '三带二'),
-                 ([606], '四带二'), ([708], '四带四'), ([612, 618, 716], '航天飞机！')]
+                  ([4], '炸弹'),
+                  (list(range(8, 21, 4)), '连炸'),
+                  (patterns_single, '*'),
+                  (patterns_single_straight, '顺子'),
+                  (patterns_pair, '对*'),
+                  (patterns_pair_straight, '连对'),
+                  ([303], "三个*"),
+                  ([404], '三带一'), ([505], '三带二'),
+                  ([606], '四带二'), ([708], '四带四'), ([612, 618, 716], '航天飞机！')]
 
 
 def pattern_is_bomb(p):
@@ -59,7 +59,7 @@ def _switch_bomb_value(p):
         return p
 
 
-def _is_cd_bigger(cd: CardDescription, old_cd:CardDescription) -> bool:
+def _is_cd_bigger(cd: CardDescription, old_cd: CardDescription) -> bool:
     """cd 是否大于old_cd, 大于就符合该cd"""
     if pattern_is_bomb(old_cd.pattern):
         old_bomb_p = _switch_bomb_value(old_cd.pattern)
@@ -78,14 +78,14 @@ def _is_cd_bigger(cd: CardDescription, old_cd:CardDescription) -> bool:
         if pattern_is_bomb(cd.pattern):
             return True
         else:
-            #两个都不是bomb
+            # 两个都不是bomb
             if cd.pattern == old_cd.pattern:
                 return cd.weight > old_cd.weight
             else:
                 return False
 
 
-def is_cd_bigger(cd: CardDescription, old_cd:CardDescription) -> CardDescription:
+def is_cd_bigger(cd: CardDescription, old_cd: CardDescription) -> CardDescription:
     if _is_cd_bigger(cd, old_cd):
         return cd
 
@@ -99,7 +99,7 @@ def _check_bomb(cards):
     if cards[0] == cards[1] == cards[2] == cards[3]:
         pre = cards[0]
         for i in range(4, len(cards), 4):
-            if cards[i] == cards[i+1] == cards[i+2] == cards[i+3] and pre+1 == cards[i]:
+            if cards[i] == cards[i + 1] == cards[i + 2] == cards[i + 3] and pre + 1 == cards[i]:
                 pre = cards[i]
             else:
                 return None
@@ -130,19 +130,19 @@ def _check_pair(cards):
 def _check_pair_straight(cards):
     if cards[0] == cards[1]:
         pre = cards[0]
-        for i in range(2,len(cards),2):
-            if cards[i] == cards[i+1] and pre+1 == cards[i]:
+        for i in range(2, len(cards), 2):
+            if cards[i] == cards[i + 1] and pre + 1 == cards[i]:
                 pre = cards[i]
             else:
                 return None
-        return CardDescription(200+len(cards), cards[0])
+        return CardDescription(200 + len(cards), cards[0])
 
 
 def _check_triple(cards):
     if cards[0] == cards[1] == cards[2]:
         pre = cards[0]
         for i in range(3, len(cards), 3):
-            if cards[i] == cards[i+1] == cards[i+2] and pre+1 == cards[i]:
+            if cards[i] == cards[i + 1] == cards[i + 2] and pre + 1 == cards[i]:
                 pre = cards[i]
             else:
                 return None
@@ -184,22 +184,22 @@ def _check_four_pairs(cards):
     四个一样的牌不允许拆分，防止歧义
     """
     for i in range(0, len(cards), 2):
-        if cards[i] != cards[i+1]:
+        if cards[i] != cards[i + 1]:
             return None
-    #寻找4个一样的牌的list
+    # 寻找4个一样的牌的list
     fours = []
     for i in range(0, len(cards), 4):
-        if cards[i] == cards[i+2]:
+        if cards[i] == cards[i + 2]:
             fours.append(cards[i])
 
-    if len(fours) == len(cards)/8:
+    if len(fours) == len(cards) / 8:
         pre = fours[0]
         if i in range(1, len(fours)):
             if fours[i] == pre:
                 pre = fours[i]
             else:
                 return None
-        return CardDescription(700+len(cards), fours[0])
+        return CardDescription(700 + len(cards), fours[0])
 
 
 _pattern_map_check = [(patterns_grand_bomb, _check_grand_bomb),
@@ -264,7 +264,7 @@ def check_all_bomb(cards):
     """
     if len(cards) == 2:
         return _check_grand_bomb(cards)
-    elif len(cards)%4 == 0 and 4 <= len(cards) <= 20:
+    elif len(cards) % 4 == 0 and 4 <= len(cards) <= 20:
         return _check_bomb(cards)
 
 
@@ -280,7 +280,7 @@ def check_value_deal(cards, cd=None) -> CardDescription:
         if result:
             return is_cd_bigger(result, cd)
         else:
-            if pattern_is_bomb(cd.pattern):# 原来还是炸弹，肯定不行了
+            if pattern_is_bomb(cd.pattern):  # 原来还是炸弹，肯定不行了
                 return None
             else:
                 # 都不是炸弹，检查常规 长度优先
@@ -293,5 +293,3 @@ def check_value_deal(cards, cd=None) -> CardDescription:
     else:
         result = _check_all_possible(cards)
         return result
-
-
