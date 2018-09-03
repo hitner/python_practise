@@ -9,6 +9,7 @@ class CardDescription:
 
 """
 牌型 一个人最多54-3 = 51  51/3=17 最多20张
+炸弹统一为 4 2 8 这些小于100的
 101， 单排
 105 - 112 顺子最多为 3-A 
 """
@@ -21,9 +22,10 @@ patterns_triple_single = list(range(404, 421, 4))
 patterns_triple_pair = list(range(505, 521, 5))
 patterns_four_two = list(range(606, 621, 6))
 patterns_four_pairs = list(range(708, 721, 8))
-patterns_bomb = [2, 4]
+patterns_grand_bomb = [2]
+patterns_bombs = list(range(4, 21, 4))
 
-patterns_all = patterns_bomb + \
+patterns_all = patterns_grand_bomb + patterns_bombs +\
                patterns_single + patterns_single_straight + \
                patterns_pair + patterns_pair_straight + \
                patterns_triple + patterns_triple_single + patterns_triple_pair + \
@@ -37,7 +39,13 @@ def _check_grand_bomb(cards):
 
 def _check_bomb(cards):
     if cards[0] == cards[1] == cards[2] == cards[3]:
-        return CardDescription(4, cards[0])
+        pre = cards[0]
+        for i in range(4, len(cards), 4):
+            if cards[i] == cards[i+1] == cards[i+2] == cards[i+3] and pre == cards[i]:
+                pre = cards[i]
+            else:
+                return None
+        return CardDescription(len(cards), cards[0])
 
 
 def _check_single(cards):
@@ -120,8 +128,8 @@ def _check_four_pairs(cards):
 
 
 
-_pattern_map_check = [([2], _check_grand_bomb),
-                      ([4], _check_bomb),
+_pattern_map_check = [(patterns_grand_bomb, _check_grand_bomb),
+                      (patterns_bombs, _check_bomb),
                       (patterns_single, _check_single),
                       (patterns_single_straight, _check_single_straight_),
                       (patterns_pair, _check_pair),

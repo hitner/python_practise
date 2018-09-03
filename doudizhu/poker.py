@@ -124,3 +124,35 @@ def remove_min3_color(cards):
     for c in cards:
         ret.append(c & 0x1F)
     return ret
+
+
+class SplitMachine:
+    def __init__(self):
+        self.state = 0
+        self.cards = []
+
+    def process(self,c):
+        if self.state:
+            if self.cards[0] == c:
+                self.cards.append(c)
+            else:
+                self.state = 0
+                return len(self.cards), self.cards[0]
+        else:
+            self.state = 1
+            self.cards = [c]
+
+
+def split_min3(cards):
+    """把一手牌分解为一个dict，分别存储4、3、2、1的牌数"""
+    result = {}
+    sm = SplitMachine()
+    for c in cards:
+        ret = sm.process(c)
+        if ret:
+            if ret[0] in result:
+                result[ret[0]].append(ret[1])
+            else:
+                result[ret[0]] = [ret[1]]
+    return result
+
