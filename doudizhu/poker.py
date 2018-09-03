@@ -136,23 +136,38 @@ class SplitMachine:
             if self.cards[0] == c:
                 self.cards.append(c)
             else:
-                self.state = 0
-                return len(self.cards), self.cards[0]
+                ret = len(self.cards), self.cards[0]
+                self.cards = [c]
+                return ret
         else:
             self.state = 1
             self.cards = [c]
+
+    def end(self):
+        ret = None
+        if self.state:
+            ret = len(self.cards), self.cards[0]
+            self.state = 0
+            self.cards = []
+        return ret
 
 
 def split_min3(cards):
     """把一手牌分解为一个dict，分别存储4、3、2、1的牌数"""
     result = {}
-    sm = SplitMachine()
-    for c in cards:
-        ret = sm.process(c)
+
+    def add_result(ret):
         if ret:
             if ret[0] in result:
                 result[ret[0]].append(ret[1])
             else:
                 result[ret[0]] = [ret[1]]
-    return result
 
+    sm = SplitMachine()
+    for c in cards:
+        r = sm.process(c)
+        add_result(r)
+    r = sm.end()
+    add_result(r)
+
+    return result

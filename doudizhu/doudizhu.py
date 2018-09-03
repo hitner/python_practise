@@ -1,10 +1,12 @@
-
+import poker
 
 class CardDescription:
     """一手有效出牌的描述"""
     def __init__(self, pattern=0, weight=0):
         self.pattern = pattern
         self.weight = weight
+
+
 
 
 """
@@ -25,11 +27,67 @@ patterns_four_pairs = list(range(708, 721, 8))
 patterns_grand_bomb = [2]
 patterns_bombs = list(range(4, 21, 4))
 
-patterns_all = patterns_grand_bomb + patterns_bombs +\
+_patterns_all = patterns_grand_bomb + patterns_bombs +\
                patterns_single + patterns_single_straight + \
                patterns_pair + patterns_pair_straight + \
                patterns_triple + patterns_triple_single + patterns_triple_pair + \
                patterns_four_two + patterns_four_pairs
+
+_patterns_text = [(patterns_grand_bomb, '王炸'),
+                 ([4], '炸弹'),
+                 (list(range(8, 21, 4)), '连炸'),
+                 (patterns_single, '*'),
+                 (patterns_single_straight, '顺子'),
+                 (patterns_pair, '对*'),
+                 (patterns_pair_straight, '连对'),
+                 ([303], "三个*"),
+                 ([404], '三带一'), ([505], '三带二'),
+                 ([606], '四带二'), ([708], '四带四'), ([612, 618, 716], '航天飞机！')]
+
+
+def pattern_is_bomb(p):
+    if p in patterns_grand_bomb or p in patterns_bombs:
+        return True
+
+
+def _switch_bomb_value(p):
+    if p == 2:
+        return 4
+    elif p == 4:
+        return 2
+    else:
+        return p
+
+
+def _is_cd_bigger(cd: CardDescription, old_cd:CardDescription) -> bool:
+    """cd 是否大于old_cd, 大于就符合该cd"""
+    if pattern_is_bomb(old_cd.pattern):
+        old_bomb_p = _switch_bomb_value(old_cd.pattern)
+        if pattern_is_bomb(cd.pattern):
+            bomb_p = _switch_bomb_value(cd.pattern)
+            if bomb_p > old_bomb_p:
+                return True
+            elif bomb_p == old_bomb_p:
+                return cd.weight > old_cd.weight
+            else:
+                return False
+        else:
+            return False
+
+    else:
+        if pattern_is_bomb(cd.pattern):
+            return True
+        else:
+            #两个都不是bomb
+            if cd.pattern == old_cd.pattern:
+                return cd.weight > old_cd.weight
+            else:
+                return False
+
+
+def is_cd_bigger(cd: CardDescription, old_cd:CardDescription) -> CardDescription:
+    if _is_cd_bigger(cd, old_cd):
+        return cd
 
 
 def _check_grand_bomb(cards):
@@ -41,11 +99,12 @@ def _check_bomb(cards):
     if cards[0] == cards[1] == cards[2] == cards[3]:
         pre = cards[0]
         for i in range(4, len(cards), 4):
-            if cards[i] == cards[i+1] == cards[i+2] == cards[i+3] and pre == cards[i]:
+            if cards[i] == cards[i+1] == cards[i+2] == cards[i+3] and pre+1 == cards[i]:
                 pre = cards[i]
             else:
                 return None
-        return CardDescription(len(cards), cards[0])
+        if pre <= poker.MIN3['A']:
+            return CardDescription(len(cards), cards[0])
 
 
 def _check_single(cards):
@@ -59,7 +118,8 @@ def _check_single_straight_(cards):
             pre = cards[i]
         else:
             return None
-    return CardDescription(100 + len(cards), cards[0])
+    if pre <= poker.MIN3['A']:
+        return CardDescription(100 + len(cards), cards[0])
 
 
 def _check_pair(cards):
@@ -90,15 +150,33 @@ def _check_triple(cards):
 
 
 def _check_triple_single(cards):
-    pass
+    splits = poker.split_min3(cards)
+    if 3 not in splits:
+        return None
+    is_straight = _check_single_straight_(splits[3])
+    if is_straight:
+        if len(cards) == len(splits[3]) * 4:
+            return CardDescription(400 + len(cards), splits[3][0])
 
 
 def _check_triple_pair(cards):
-    pass
+    splits = poker.split_min3(cards)
+    if 3 not in splits or 1 in splits or 4 in splits:
+        return None
+    is_straight = _check_single_straight_(splits[3])
+    if is_straight:
+        if len(cards) == len(splits[3]) * 5:
+            return CardDescription(500 + len(cards), splits[3][0])
 
 
 def _check_four_two(cards):
-    pass
+    splits = poker.split_min3(cards)
+    if 4 not in splits:
+        return None
+    is_straight = _check_single_straight_(splits[4])
+    if is_straight:
+        if len(cards) == len(splits[4]) * 6:
+            return CardDescription(600 + len(cards), splits[4][0])
 
 
 def _check_four_pairs(cards):
@@ -122,10 +200,6 @@ def _check_four_pairs(cards):
             else:
                 return None
         return CardDescription(700+len(cards), fours[0])
-
-
-
-
 
 
 _pattern_map_check = [(patterns_grand_bomb, _check_grand_bomb),
@@ -182,6 +256,18 @@ def _check_all_possible(cards) -> CardDescription:
             return result
 
 
+def check_all_bomb(cards):
+    """
+    注意这里长度是没有检查的！
+    :param cards:
+    :return:
+    """
+    if len(cards) == 2:
+        return _check_grand_bomb(cards)
+    elif len(cards)%4 == 0 and 4 <= len(cards) <= 20:
+        return _check_bomb(cards)
+
+
 def check_value_deal(cards, cd=None) -> CardDescription:
     """
     :param cards: 牌,必须是min3型 (从小到大排序）
@@ -189,16 +275,23 @@ def check_value_deal(cards, cd=None) -> CardDescription:
     :return:
     """
     if cd:
-        f = _get_function_from_pattern(cd.pattern)
-        result = f(cards)
+        # 优先检查炸弹
+        result = check_all_bomb(cards)
         if result:
-            pass
+            return is_cd_bigger(result, cd)
+        else:
+            if pattern_is_bomb(cd.pattern):# 原来还是炸弹，肯定不行了
+                return None
+            else:
+                # 都不是炸弹，检查常规 长度优先
+                if len(cards) == cd.pattern % 100:
+                    f = _get_function_from_pattern(cd.pattern)
+                    result = f(cards)
+                    # 一样的pattern 对比 weight
+                    if result.weight > cd.weight:
+                        return result
     else:
         result = _check_all_possible(cards)
         return result
 
 
-import poker
-
-
-#check_value_deal(poker.min3_from_monocolor_visual('9900JJ'))
