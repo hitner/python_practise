@@ -22,7 +22,7 @@ class Doudizhu:
         self.cards_pool = list(poker.MIN3_ALL)
         self.current_p_index = 0
         self.pre_cd = None
-        self.cannot_afford = 0 # yao bu qi
+        self.cannot_afford = 0  # yao bu qi
 
     def _next_player(self):
         if self.current_p_index == 2:
@@ -47,15 +47,20 @@ class Doudizhu:
             return ret
 
     def dealCard(self, p_index, cards):
-        """cards 必须已经排过序了"""
-        if (p_index == self.current_p_index):
+        """
+        返回 None 表示无效出牌
+        返回 cd ,i 表示下一个人i 按cd牌型出牌
+        返回 None, i 表示下一个人i可以任意出牌了（前面一个人不要）
+        返回 cd, i, 1 表示 i 赢了
+        """
+        if p_index == self.current_p_index:
             if cards:
                 if poker.check_has_deal(self.player_cards[p_index], cards):
                     ret = doudizhu.check_value_deal(poker.remove_min3_color(cards), self.pre_cd)
                     if ret:
                         poker.remove_deal(self.player_cards[p_index], cards)
                         if len(self.player_cards[p_index]) == 0:
-                            return ret, self.current_p_index, 1 # 结束
+                            return ret, self.current_p_index, 1  # 结束
                         self._next_player()
                         self.pre_cd = ret
                         self.cannot_afford = 0
