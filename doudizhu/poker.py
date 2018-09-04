@@ -1,3 +1,4 @@
+import random
 '''
 poker牌的几种表现形式
 
@@ -185,4 +186,14 @@ def split_min3(cards):
     add_result(r)
 
     return result
+
+
+def fisher_yates_shuffle(cards):
+    ln = len(cards)
+    if ln <= 2:
+        return
+
+    for i in range(0, ln - 2):
+        j = random.randint(i, ln -1 )
+        cards[i], cards[j] = cards[j], cards[i]
 

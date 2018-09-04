@@ -17,3 +17,8 @@ out4 = poker.visual_from_color_min3(out2)
 print(out4)
 
 print(poker.visual_from_color_min3(poker.MIN3_ALL))
+
+
+aa = list(poker.MIN3_ALL)
+poker.fisher_yates_shuffle(aa)
+print(poker.visual_from_color_min3(aa))
