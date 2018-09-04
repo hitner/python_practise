@@ -138,7 +138,7 @@ def remove_min3_color(cards):
     ret = bytearray()
     for c in cards:
         ret.append(c & 0x1F)
-    return ret
+    return sorted(ret)
 
 
 class SplitMachine:
@@ -197,3 +197,17 @@ def fisher_yates_shuffle(cards):
         j = random.randint(i, ln -1 )
         cards[i], cards[j] = cards[j], cards[i]
 
+
+def check_has_deal(cards, deal):
+    backup = list(cards)
+    try:
+        for c in deal:
+            backup.remove(c)
+    except ValueError as e:
+        return False
+    return True
+
+
+def remove_deal(cards, deal):
+    for c in deal:
+        cards.remove(c)
