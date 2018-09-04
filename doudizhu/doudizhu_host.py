@@ -16,7 +16,7 @@ getTurns 返回id，指示该谁出牌了
 
 class Doudizhu:
 
-    def dealCard(self):
+    def shuffle(self):
         pass
 
     def dealCard(self, player, cards):

@@ -55,6 +55,20 @@ min3_char = [14, 15] + list(range(3, 14)) + [16, 17]
 min3_to_visual = dict(zip(min3_char, visual_char))
 visual_to_min3 = dict(zip(visual_char, min3_char))
 MIN3 = visual_to_min3
+MIN3_Q = visual_to_min3['Q']
+MIN3_K = visual_to_min3['K']
+MIN3_A = visual_to_min3['A']
+MIN3_2 = visual_to_min3['2']
+MIN3_V = visual_to_min3['V']
+MIN3_W = visual_to_min3['W']
+
+MIN3_diamond = list(range((0x02 << 4) + 3, (0x02 << 4) + 16))
+MIN3_club = list(range((0x04 << 4) + 3, (0x04 << 4) + 16))
+MIN3_heart = list(range((0x06 << 4) + 3, (0x06 << 4) + 16))
+MIN3_spade = list(range((0x08 << 4) + 3, (0x08 << 4) + 16))
+MIN3_joker = [16, 17]
+
+MIN3_ALL = MIN3_diamond + MIN3_club + MIN3_heart + MIN3_spade + MIN3_joker
 
 
 def min3_from_color_visual(cards: str):
@@ -171,3 +185,4 @@ def split_min3(cards):
     add_result(r)
 
     return result
+

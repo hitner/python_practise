@@ -81,11 +81,31 @@ class DoudizhuTest(unittest.TestCase):
         self.assertEqual(ret.pattern, 220)
         self.assertEqual(ret.weight, 5)
 
+    def test_pair_straight3(self):
+        ret = doudizhu.check_value_deal(poker.min3_from_monocolor_visual('KKAA22'))
+        self.assertIsNone(ret)
+
+    def test_triple(self):
+        ret = doudizhu.check_value_deal(poker.min3_from_monocolor_visual('222'))
+        self.assertTrue(ret)
+        self.assertEqual(ret.pattern, 303)
+        self.assertEqual(ret.weight, poker.MIN3_2)
+
+        ret2 = doudizhu.check_value_deal(poker.min3_from_monocolor_visual('333'), ret)
+        self.assertIsNone(ret2)
+
+    def test_triple2(self):
+        ret = doudizhu.check_value_deal(poker.min3_from_monocolor_visual('AAA222'))
+        self.assertIsNone(ret)
+
     def test_triple_single(self):
         ret = doudizhu.check_value_deal(poker.min3_from_monocolor_visual('9666777888KK'))
         self.assertTrue(ret)
         self.assertEqual(ret.pattern, 412)
         self.assertEqual(ret.weight, 6)
+
+        ret2 = doudizhu.check_value_deal(poker.min3_from_monocolor_visual('JJJQQQKKKAAA'), ret)
+        self.assertIsNone(ret2)
 
     def test_triple_pair(self):
         ret = doudizhu.check_value_deal(poker.min3_from_monocolor_visual('AA33344422'))
@@ -103,11 +123,19 @@ class DoudizhuTest(unittest.TestCase):
         self.assertEqual(ret.pattern, 606)
         self.assertEqual(ret.weight, 11)
 
+        ret1 = doudizhu.check_value_deal(poker.min3_from_monocolor_visual('222200'), ret)
+        self.assertTrue(ret1)
+        self.assertEqual(ret1.pattern, 606)
+        self.assertEqual(ret1.weight, poker.MIN3_2)
+
     def test_four_two2(self):
         ret = doudizhu.check_value_deal(poker.min3_from_monocolor_visual('55556666QQQ7'))
         self.assertTrue(ret)
         self.assertEqual(ret.pattern, 612)
         self.assertEqual(ret.weight, 5)
+
+        ret2 = doudizhu.check_value_deal(poker.min3_from_monocolor_visual('W'), ret)
+        self.assertIsNone(ret2)
 
     def test_four_two3(self):
         ret = doudizhu.check_value_deal(poker.min3_from_monocolor_visual('W66622'))
@@ -118,11 +146,19 @@ class DoudizhuTest(unittest.TestCase):
         self.assertTrue(ret)
         self.assertEqual(ret.pattern, 2)
 
+        ret2 = doudizhu.check_value_deal(poker.min3_from_monocolor_visual('2222'), ret)
+        self.assertIsNone(ret2)
+
     def test_bombs(self):
         ret = doudizhu.check_value_deal(poker.min3_from_monocolor_visual('AAAA'))
         self.assertTrue(ret)
         self.assertEqual(ret.pattern, 4)
         self.assertEqual(ret.weight, 14)
+
+        ret2 = doudizhu.check_value_deal(poker.min3_from_monocolor_visual('333344445555'), ret)
+        self.assertTrue(ret2)
+        self.assertEqual(ret2.pattern, 12)
+        self.assertEqual(ret2.weight, 3)
 
     def test_bombs2(self):
         ret = doudizhu.check_value_deal(poker.min3_from_monocolor_visual('77778888'))

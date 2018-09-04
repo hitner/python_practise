@@ -90,6 +90,19 @@ def is_cd_bigger(cd: CardDescription, old_cd: CardDescription) -> CardDescriptio
         return cd
 
 
+def _single_or_straight_without_2(cards):
+    pre = cards[0]
+    for i in range(1, len(cards)):
+        if pre + 1 == cards[i]:
+            pre = cards[i]
+        else:
+            return False
+    if pre <= poker.MIN3_2 or len(cards) == 1:
+        return True
+
+# 下面是所有牌型检查
+
+
 def _check_grand_bomb(cards):
     if cards[0] == poker.MIN3['V'] and cards[1] == poker.MIN3['W']:
         return CardDescription(2, cards[0])
@@ -135,7 +148,8 @@ def _check_pair_straight(cards):
                 pre = cards[i]
             else:
                 return None
-        return CardDescription(200 + len(cards), cards[0])
+        if pre < poker.MIN3_2:
+            return CardDescription(200 + len(cards), cards[0])
 
 
 def _check_triple(cards):
@@ -146,6 +160,8 @@ def _check_triple(cards):
                 pre = cards[i]
             else:
                 return None
+        if len(cards) > 3 and pre >= poker.MIN3_2:
+            return
         return CardDescription(300 + len(cards), cards[0])
 
 
@@ -153,7 +169,7 @@ def _check_triple_single(cards):
     splits = poker.split_min3(cards)
     if 3 not in splits:
         return None
-    is_straight = _check_single_straight_(splits[3])
+    is_straight = _single_or_straight_without_2(splits[3])
     if is_straight:
         if len(cards) == len(splits[3]) * 4:
             return CardDescription(400 + len(cards), splits[3][0])
@@ -163,7 +179,7 @@ def _check_triple_pair(cards):
     splits = poker.split_min3(cards)
     if 3 not in splits or 1 in splits or 4 in splits:
         return None
-    is_straight = _check_single_straight_(splits[3])
+    is_straight = _single_or_straight_without_2(splits[3])
     if is_straight:
         if len(cards) == len(splits[3]) * 5:
             return CardDescription(500 + len(cards), splits[3][0])
@@ -173,7 +189,7 @@ def _check_four_two(cards):
     splits = poker.split_min3(cards)
     if 4 not in splits:
         return None
-    is_straight = _check_single_straight_(splits[4])
+    is_straight = _single_or_straight_without_2(splits[4])
     if is_straight:
         if len(cards) == len(splits[4]) * 6:
             return CardDescription(600 + len(cards), splits[4][0])
@@ -288,7 +304,7 @@ def check_value_deal(cards, cd=None) -> CardDescription:
                     f = _get_function_from_pattern(cd.pattern)
                     result = f(cards)
                     # 一样的pattern 对比 weight
-                    if result.weight > cd.weight:
+                    if result and result.weight > cd.weight:
                         return result
     else:
         result = _check_all_possible(cards)
