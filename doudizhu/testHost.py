@@ -3,7 +3,8 @@ import poker
 import sys
 
 def min3_cmp(c):
-    return c & 0x1F
+    return ((c & 0x1F) << 3) + (c >> 5)
+
 
 def fast_p(p):
     lp = list(p)
