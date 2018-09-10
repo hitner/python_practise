@@ -17,10 +17,14 @@ getTurns 返回id，指示该谁出牌了
 class Doudizhu:
 
     def __init__(self):
+        self._cards_pool = list(poker.MIN3_ALL)
+
         self.player_cards = {0: [], 1: [], 2: []}
         self.back_3 = []
-        self.cards_pool = list(poker.MIN3_ALL)
+        self.cursor = 0 #未开始 1：叫分阶段 > 2：出牌阶段
         self.current_p_index = 0
+        self.pre_deals = []
+
         self.pre_cd = None
         self.cannot_afford = 0  # yao bu qi
 
@@ -30,15 +34,19 @@ class Doudizhu:
         else:
             self.current_p_index = self.current_p_index + 1
 
-    def shuffle(self):
-        poker.fisher_yates_shuffle(self.cards_pool)
-        self.back_3 = self.cards_pool[0:3]
-        self.player_cards[0] = sorted(self.cards_pool[3:54:3])
-        self.player_cards[1] = sorted(self.cards_pool[4:54:3])
-        self.player_cards[2] = sorted(self.cards_pool[5:54:3])
-        return dict(self.player_cards)
+    def shuffle(self) -> dict:
+        """洗牌，返回一个新的dict"""
+        poker.fisher_yates_shuffle(self._cards_pool)
+        self.back_3 = self._cards_pool[0:3]
+        self.player_cards[0] = sorted(self._cards_pool[3:54:3])
+        self.player_cards[1] = sorted(self._cards_pool[4:54:3])
+        self.player_cards[2] = sorted(self._cards_pool[5:54:3])
+        ret =  dict(self.player_cards)
+        return ret
 
     def master_for(self, p_index):
+        if self.stage != 0:
+            pass
         if len(self.back_3) == 3 and 0 <= p_index <= 2:
             self.current_p_index = p_index
             self.player_cards[p_index] += self.back_3
@@ -76,3 +84,17 @@ class Doudizhu:
                     return None, self.current_p_index
                 else:
                     return self.pre_cd, self.current_p_index
+
+    def get_player_status(self, index):
+        ret = {}
+        ret['cursor'] = self.cursor
+        if self.cursor == 1:
+            ret['cards'] = self.player_cards[index]
+        elif self.cursor > 1:
+            ret['cards'] = self.player_cards[index]
+            ret['current_index'] = self.current_p_index
+            remains = []
+            for ip in self.player_cards:
+                remains.append(len(ip))
+            ret['remains'] = remains
+
