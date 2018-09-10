@@ -2,12 +2,13 @@ from tornado.web import RequestHandler, MissingArgumentError
 from RoomPool import room_pool
 import asyncio
 
+
 class BaseHandler(RequestHandler):
     def write_success(self, data):
-        self.write({'rcode':0, 'data':data})
+        self.write({'rcode': 0, 'data': data})
 
     def write_my_error(self, rcode, describe):
-        self.write({'rcode':rcode, 'describe':describe})
+        self.write({'rcode': rcode, 'describe': describe})
 
     def write_para_error(self):
         self.write_my_error(100, "para error")
@@ -18,18 +19,17 @@ class BaseHandler(RequestHandler):
     def write_nocards_error(self):
         self.write_my_error(120, "no cards")
 
+
 class RandomJoinRoomHandler(BaseHandler):
     def get(self, *args, **kwargs):
         try:
             uid = int(self.get_argument('uid'))
             rid = room_pool.RandomJoinRoom(uid)
-            self.write_success({'roomId':rid})
+            self.write_success({'roomId': rid})
         except MissingArgumentError:
             self.write_para_error()
         except Exception:
             self.write_error(500)
-
-
 
 
 class GetMyCardsHandler(BaseHandler):
@@ -38,13 +38,13 @@ class GetMyCardsHandler(BaseHandler):
             uid = int(self.get_argument('uid'))
             roomId = int(self.get_argument('roomId'))
             if room_pool.isUserInRoom(uid, roomId):
-                dret = room_pool.getMyCards(uid, roomId)
+                dret = room_pool.get_room(roomId).getMyCards(uid)
                 if dret:
                     self.write_success(dret)
                 else:
                     self.write_nocards_error()
             else:
-                self.write_notinroom_error
+                self.write_notinroom_error()
 
         except MissingArgumentError:
             self.write_para_error()
@@ -52,28 +52,26 @@ class GetMyCardsHandler(BaseHandler):
             self.write_error(500)
 
 
-
-class DealCardHandler(RequestHandler):
+class DealCardHandler(BaseHandler):
     def get(self, *args, **kwargs):
         try:
             uid = int(self.get_argument('uid'))
             roomId = int(self.get_argument('roomId'))
-            cards= self.get_argument('cards',default='')
+            cards = self.get_argument('cards', default='')
             if room_pool.isUserInRoom(uid, roomId):
-                room = room_pool.pool[roomId]
+                room = room_pool.get_room(roomId)
                 dret = room.deal_cards(uid, cards)
                 final = {'rcode': 121, 'describe': 'not value deals'}
                 if dret:
                     final = {'rcode': 0}
                 self.write_success(final)
             else:
-                self.write_notinroom_error
+                self.write_notinroom_error()
 
         except MissingArgumentError:
             self.write_para_error()
         except Exception:
             self.write_error(500)
-
 
 
 class PollChangesHandler(BaseHandler):
@@ -85,14 +83,15 @@ class PollChangesHandler(BaseHandler):
             cursor = int(self.get_argument('cursor'))
 
             if room_pool.isUserInRoom(uid, roomId):
-                msgs = room_pool.getRoomMessages(roomId, cursor)
+                room = room_pool.get_room(roomId)
+                msgs = room.getRoomMessages(cursor)
                 while not msgs:
-                    self.wait_future = room_pool.waitOnRoom(roomId)
+                    self.wait_future = room.wait()
                     try:
                         await self.wait_future
                     except asyncio.CancelledError:
                         return
-                    msgs = room_pool.getRoomMessages(roomId, cursor)
+                    msgs = room.getRoomMessages(cursor)
                 if self.request.connection.stream.closed():
                     return
 

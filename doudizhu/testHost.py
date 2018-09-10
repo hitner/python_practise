@@ -18,23 +18,31 @@ def print_players(ppp):
     print('2:', poker.visual_from_color_min3(ppp[2]))
 
 
+def print_all_status(dd : doudizhu_host.Doudizhu):
+    print('\n\n')
+    print(dd.get_player_status(0))
+    print(dd.get_player_status(1))
+    print(dd.get_player_status(2))
+
 d = doudizhu_host.Doudizhu()
 current_index = 0
 game_win = 3
 
-players = d.shuffle()
+d.shuffle()
 
-print_players(players)
+print_all_status(d)
 
-back3 = d.master_for(current_index)
-print(fast_p(back3))
+d.master_for(current_index)
 
-print_players(players)
+
+
+
 
 while game_win == 3:
     print('')
-    s = input("for " + str(current_index) + ":" + fast_p(players[current_index]) + ":" +
-              str(len(players[current_index])) + ":")
+    print_all_status(d)
+    s = input("for " + str(current_index) + ":" + fast_p(d.player_cards[current_index]) + ":" +
+              str(len(d.player_cards[current_index])) + ":")
     cards = poker.min3_from_color_visual(str(s))
     if cards is None:
         print("bad input")
@@ -42,14 +50,17 @@ while game_win == 3:
     print(fast_p(cards))
     deal_result = d.dealCard(current_index, cards)
     if deal_result:
-        current_index = deal_result[1]
-        if deal_result[0]:
-            print("ok:", deal_result[0].pattern, ',', deal_result[0].weight)
-            if len(deal_result) == 3:
-                game_win = current_index
-                print("game over, winner:" , game_win)
+        print(deal_result)
+        if len(d.player_cards[current_index]) == 0:
+            game_win = current_index
+            print("game over, winner:", game_win)
         else:
-            print("ok, any thing you want:")
+            current_index = current_index + 1
+            if current_index == 3:
+                current_index = 0
+
+            if deal_result['next_pattern'] == 0:
+                print("ok, any thing you want:")
     else:
         print("bad input")
 

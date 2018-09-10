@@ -40,7 +40,9 @@ A 2 3 4 5 6 7 8 9 0 J Q K V W
 
 min1_char = range(1, 16)
 
-
+"""
+传输层使用min3的hex值
+"""
 
 
 '''

@@ -68,6 +68,17 @@ class Room:
         return bool(result)
 
 
+    def getRoomMessages(self, cursor):
+        return self.msgBuffer.get_message_since(cursor)
+
+    def wait(self):
+        return self.msgBuffer.buffer.cond.wait()
+
+
+    def getMyCards(self, uid):
+        return self.gameHost.get_player_status(self.get_internal_index(uid))
+
+
 
 class RoomPool:
     """
@@ -125,29 +136,14 @@ class RoomPool:
         print(uid, ' join room:', targetRoom.room_id)
         return targetRoom.room_id
 
-    def getUserRoom(self, uid) -> int:
+    def get_room(self, roomId) -> Room:
         """先不考虑性能优化,roomId为0是为空的意思"""
-        for k, v in self.pool.items():
-            if v.isContainPlayer(uid):
-                return k
-        return 0
+        return self.pool[roomId]
+
 
     def isUserInRoom(self, uid, roomid):
         if roomid in self.pool:
             return self.pool[roomid].isContainPlayer(uid)
-
-
-    def getRoomMessages(self, roomId, cursor):
-        return self.pool[roomId].msgBuffer.get_message_since(cursor)
-
-    def waitOnRoom(self, roomId):
-        buffer =  self.pool[roomId].msgBuffer
-        return buffer.cond.wait()
-
-
-    def getMyCards(self, uid, roomid):
-        room = self.pool[roomid]
-        return room.gameHost.get_player_status(room.get_internal_index(uid))
 
 
 
