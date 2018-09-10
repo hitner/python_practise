@@ -55,7 +55,24 @@ class GetMyCardsHandler(BaseHandler):
 
 class DealCardHandler(RequestHandler):
     def get(self, *args, **kwargs):
-        pass
+        try:
+            uid = int(self.get_argument('uid'))
+            roomId = int(self.get_argument('roomId'))
+            cards= self.get_argument('cards',default='')
+            if room_pool.isUserInRoom(uid, roomId):
+                room = room_pool.pool[roomId]
+                dret = room.deal_cards(uid, cards)
+                final = {'rcode': 121, 'describe': 'not value deals'}
+                if dret:
+                    final = {'rcode': 0}
+                self.write_success(final)
+            else:
+                self.write_notinroom_error
+
+        except MissingArgumentError:
+            self.write_para_error()
+        except Exception:
+            self.write_error(500)
 
 
 

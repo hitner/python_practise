@@ -21,9 +21,12 @@ class Doudizhu:
 
         self.player_cards = {0: [], 1: [], 2: []}
         self.back_3 = []
+        self.master = -1
         self.cursor = 0 #未开始 1：叫分阶段 > 2：出牌阶段
-        self.current_p_index = 0
+        self.current_p_index = -1
         self.pre_deals = []
+
+        self.callback = None
 
         self.pre_cd = None
         self.cannot_afford = 0  # yao bu qi
@@ -34,6 +37,10 @@ class Doudizhu:
         else:
             self.current_p_index = self.current_p_index + 1
 
+    def register_callback(self, callback):
+        assert callback
+        self.callback = callback
+
     def shuffle(self) -> dict:
         """洗牌，返回一个新的dict"""
         poker.fisher_yates_shuffle(self._cards_pool)
@@ -41,20 +48,37 @@ class Doudizhu:
         self.player_cards[0] = sorted(self._cards_pool[3:54:3])
         self.player_cards[1] = sorted(self._cards_pool[4:54:3])
         self.player_cards[2] = sorted(self._cards_pool[5:54:3])
-        ret =  dict(self.player_cards)
-        return ret
+        self._cards_pool = []
+        self.master = -1
+        self.cursor = 1
+        self.current_p_index = -1
+        self.pre_deals = []
 
     def master_for(self, p_index):
-        if self.stage != 0:
-            pass
-        if len(self.back_3) == 3 and 0 <= p_index <= 2:
+        assert self.master == -1 and self.cursor == 1
+        if 0 <= p_index <= 2:
             self.current_p_index = p_index
             self.player_cards[p_index] += self.back_3
-            ret = self.back_3
-            self.back_3 = []
-            return ret
+            return self.back_3
+
 
     def dealCard(self, p_index, cards):
+        result = {}
+        ret = self._dealCard2(p_index, cards)
+        if ret:
+            self.cursor = self.cursor + 1
+
+            result['cursor'] = self.cursor
+            result['actor'] = p_index
+            result['cards'] = cards
+            result['next_pattern'] = ret[0].pattern
+            result['next_weight'] = ret[0].weight
+
+        return result
+
+
+
+    def _dealCard2(self, p_index, cards):
         """
         返回 None 表示无效出牌
         返回 cd ,i 表示下一个人i 按cd牌型出牌
@@ -81,7 +105,7 @@ class Doudizhu:
                 if self.cannot_afford == 2:
                     self.cannot_afford = 0
                     self.pre_cd = None
-                    return None, self.current_p_index
+                    return doudizhu.CardDescription(), self.current_p_index
                 else:
                     return self.pre_cd, self.current_p_index
 
@@ -93,8 +117,13 @@ class Doudizhu:
         elif self.cursor > 1:
             ret['cards'] = self.player_cards[index]
             ret['current_index'] = self.current_p_index
+            ret['master'] = self.master
             remains = []
             for ip in self.player_cards:
                 remains.append(len(ip))
             ret['remains'] = remains
+            ret['back3'] = self.back_3
+            ret['pre_deals'] = self.pre_deals
+
+        return ret
 

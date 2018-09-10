@@ -55,6 +55,17 @@ class Room:
             self.gameHost.shuffle()
             self.msgBuffer.add_message({'cursor': self.GameStart})
 
+    def get_internal_index(self, uid):
+        return self.players.index(uid)
+
+    def deal_cards(self, uid, cards) -> bool:
+
+        result = self.gameHost.dealCard(self.get_internal_index(uid), cards)
+        #输出这次action { cursor:  cards:  pattern: weight: index:  next_pattern:0}
+        if result:
+            self.msgBuffer.add_message(result)
+
+        return bool(result)
 
 
 
@@ -136,8 +147,7 @@ class RoomPool:
 
     def getMyCards(self, uid, roomid):
         room = self.pool[roomid]
-
-        room.gameHost
+        return room.gameHost.get_player_status(room.get_internal_index(uid))
 
 
 
