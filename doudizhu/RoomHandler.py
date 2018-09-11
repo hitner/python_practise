@@ -4,6 +4,12 @@ import asyncio
 
 
 class BaseHandler(RequestHandler):
+    def set_default_headers(self):
+        self.set_header("Access-Control-Allow-Origin", "*")
+        self.set_header("Access-Control-Allow-Headers", "Content-Type, X-Requested-With")
+        self.set_header('Access-Control-Allow-Methods', 'POST, GET, OPTIONS')
+        #pass
+
     def write_success(self, data):
         self.write({'rcode': 0, 'data': data})
 
@@ -19,6 +25,10 @@ class BaseHandler(RequestHandler):
     def write_nocards_error(self):
         self.write_my_error(120, "no cards")
 
+    def options(self, *args, **kwargs):
+        self.set_status(204)
+        self.finish()
+
 
 class RandomJoinRoomHandler(BaseHandler):
     def get(self, *args, **kwargs):
@@ -30,6 +40,9 @@ class RandomJoinRoomHandler(BaseHandler):
             self.write_para_error()
         except Exception:
             self.write_error(500)
+
+    def post(self, *args, **kwargs):
+        self.get()
 
 
 class GetMyCardsHandler(BaseHandler):
@@ -50,6 +63,9 @@ class GetMyCardsHandler(BaseHandler):
             self.write_para_error()
         except Exception:
             self.write_error(500)
+
+    def post(self, *args, **kwargs):
+        self.get()
 
 
 class DealCardHandler(BaseHandler):
@@ -73,10 +89,13 @@ class DealCardHandler(BaseHandler):
         except Exception:
             self.write_error(500)
 
+    def post(self, *args, **kwargs):
+        self.get()
+
 
 class PollChangesHandler(BaseHandler):
 
-    async def get(self, *args, **kwargs):
+    async def post(self, *args, **kwargs):
         try:
             uid = int(self.get_argument('uid'))
             roomId = int(self.get_argument('roomId'))

@@ -138,18 +138,21 @@ class Doudizhu:
                     return doudizhu.CardDescription()
 
     def get_player_status(self, index):
+        assert self.cursor
+
         ret = {}
+
         ret['cursor'] = self.cursor
-        if self.cursor == 1:
-            ret['cards'] = self.player_cards[index].hex()
-        elif self.cursor > 1:
-            ret['cards'] = self.player_cards[index].hex()
+        remains = []
+        for ip in self.player_cards:
+            remains.append(len(self.player_cards[ip]))
+        ret['remains'] = remains
+        ret['cards'] = self.player_cards[index].hex()
+        ret['my_index'] = index
+        if self.cursor > 1:
             ret['current_index'] = self.current_p_index
             ret['master'] = self.master
-            remains = []
-            for ip in self.player_cards:
-                remains.append(len(self.player_cards[ip]))
-            ret['remains'] = remains
+
             ret['back3'] = self.back_3.hex()
             ret['pre_deals'] = self.pre_deals
 

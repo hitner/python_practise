@@ -72,7 +72,7 @@ class Room:
         return self.msgBuffer.get_message_since(cursor)
 
     def wait(self):
-        return self.msgBuffer.buffer.cond.wait()
+        return self.msgBuffer.cond.wait()
 
 
     def getMyCards(self, uid):
@@ -98,6 +98,12 @@ class RoomPool:
         self.pool[room.room_id] = room
         return room
 
+    def _get_user_room(self, uid) -> int:
+        """先不考虑性能优化,roomId为0是为空的意思"""
+        for k, v in self.pool.items():
+            if v.isContainPlayer(uid):
+                return k
+        return 0
 
 
     def createRoom(self, uid = 0):
@@ -118,7 +124,7 @@ class RoomPool:
 
     def RandomJoinRoom(self, uid) -> int:
         """随机进房"""
-        alreadyRoom = self.getUserRoom(uid)
+        alreadyRoom = self._get_user_room(uid)
         if alreadyRoom:
             return alreadyRoom
 
