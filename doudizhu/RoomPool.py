@@ -58,8 +58,15 @@ class Room:
     def get_internal_index(self, uid):
         return self.players.index(uid)
 
-    def deal_cards(self, uid, cards) -> bool:
+    def ask_for_master(self, uid) -> bool:
+        result = self.gameHost.master_for(self.get_internal_index(uid))
+        if result:
+            print(uid, 'ask for master success')
+            self.msgBuffer.add_message(result)
+        return bool(result)
 
+    def deal_cards(self, uid, cs) -> bool:
+        cards= bytes.fromhex(cs)
         result = self.gameHost.dealCard(self.get_internal_index(uid), cards)
         #输出这次action { cursor:  cards:  pattern: weight: index:  next_pattern:0}
         if result:

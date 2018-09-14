@@ -2,7 +2,7 @@ import asyncio
 import tornado.ioloop
 import tornado.web
 
-from RoomHandler import  RandomJoinRoomHandler, DealCardHandler, PollChangesHandler,GetMyCardsHandler
+from RoomHandler import  RandomJoinRoomHandler, DealCardHandler, PollChangesHandler,GetMyCardsHandler,AskForMasterHandler
 
 
 from tornado.options import define, options, parse_command_line
@@ -17,7 +17,8 @@ def main():
         (r"/dealcard", DealCardHandler),
         (r"/getmycards", GetMyCardsHandler),
         (r"/randomjoinroom", RandomJoinRoomHandler),
-        (r"/pollchanges", PollChangesHandler)
+        (r"/pollchanges", PollChangesHandler),
+        (r"/askformaster", AskForMasterHandler),
     ], debug = options.debug,
     )
 

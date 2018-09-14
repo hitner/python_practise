@@ -77,15 +77,20 @@ class Doudizhu:
         self.pre_deals = []
 
     def master_for(self, p_index) -> bool:
-        assert self.master == -1 and self.cursor == 1
-        if 0 <= p_index <= 2:
-            self.master = p_index
-            self.cursor = 2
-            self.current_p_index = p_index
-            self.player_cards[p_index] += self.back_3
-            return True
-        else:
-            return False
+        if self.master == -1 and self.cursor == 1:
+            if 0 <= p_index <= 2:
+                self.master = p_index
+                self.cursor = 2
+                self.current_p_index = p_index
+                self.player_cards[p_index] += self.back_3
+
+                result = {
+                    'cursor':self.cursor,
+                    'master':p_index,
+                    'back3':self.back_3.hex(),
+                    'current_index':p_index,
+                }
+                return result
 
 
     def dealCard(self, p_index, cards: bytearray):

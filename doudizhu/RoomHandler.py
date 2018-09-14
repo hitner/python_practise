@@ -23,7 +23,7 @@ class BaseHandler(RequestHandler):
         self.write_my_error(110, "not in room")
 
     def write_nocards_error(self):
-        self.write_my_error(120, "no cards")
+        self.write_my_error(120, "no cards becouse of match not started")
 
     def options(self, *args, **kwargs):
         self.set_status(204)
@@ -68,6 +68,27 @@ class GetMyCardsHandler(BaseHandler):
         self.get()
 
 
+class AskForMasterHandler(BaseHandler):
+    def post(self, *args, **kwargs):
+        try:
+            uid = int(self.get_argument('uid'))
+            roomId = int(self.get_argument('roomId'))
+            if room_pool.isUserInRoom(uid, roomId):
+                room = room_pool.get_room(roomId)
+                dret = room.ask_for_master(uid)
+                if dret:
+                    self.write_success({})
+                else:
+                    self.write_my_error(122, 'already has a master')
+            else:
+                self.write_notinroom_error()
+
+        except MissingArgumentError:
+            self.write_para_error()
+        except BaseException:
+            self.write_error(500)
+
+
 class DealCardHandler(BaseHandler):
     def get(self, *args, **kwargs):
         try:
@@ -77,10 +98,10 @@ class DealCardHandler(BaseHandler):
             if room_pool.isUserInRoom(uid, roomId):
                 room = room_pool.get_room(roomId)
                 dret = room.deal_cards(uid, cards)
-                final = {'rcode': 121, 'describe': 'not value deals'}
                 if dret:
-                    final = {'rcode': 0}
-                self.write_success(final)
+                    self.write_success({})
+                else:
+                    self.write_my_error(121, 'not value deals')
             else:
                 self.write_notinroom_error()
 
