@@ -11,33 +11,33 @@ class MessageBuffer:
     def get_message_since(self, cursor):
         for i in range(0, len(self.cache)):
             if self.cache[i]['cursor'] > cursor:
-                return self.cache[i : len(self.cache)]
+                return self.cache[i: len(self.cache)]
 
-    def add_message(self,msg: dict):
+    def add_message(self, msg: dict):
         self.cache.append(msg)
 
         if len(self.cache) > self.cache_size:
-            self.cache = self.cache[int(self.cache_size/2):]
+            self.cache = self.cache[int(self.cache_size / 2):]
 
         print('notify all')
         self.cond.notify_all()
-
 
 
 """
 一个Room对应一个Game，暂无旁观席位
 """
 
+
 class Room:
     GameStart = 1
 
-    def __init__(self, rid = 0):
+    def __init__(self, rid=0):
         self.room_id = rid
         self.create_time = 0
         self.creator_uid = 0
         self.players = []
         self.msgBuffer = MessageBuffer()
-        self.gameHost : Doudizhu = Doudizhu()
+        self.gameHost: Doudizhu = Doudizhu()
 
     def isFull(self):
         return len(self.players) == 3
@@ -66,14 +66,13 @@ class Room:
         return bool(result)
 
     def deal_cards(self, uid, cs) -> bool:
-        cards= bytes.fromhex(cs)
+        cards = bytes.fromhex(cs)
         result = self.gameHost.dealCard(self.get_internal_index(uid), cards)
-        #输出这次action { cursor:  cards:  pattern: weight: index:  next_pattern:0}
+        # 输出这次action { cursor:  cards:  pattern: weight: index:  next_pattern:0}
         if result:
             self.msgBuffer.add_message(result)
 
         return bool(result)
-
 
     def getRoomMessages(self, cursor):
         return self.msgBuffer.get_message_since(cursor)
@@ -81,19 +80,18 @@ class Room:
     def wait(self):
         return self.msgBuffer.cond.wait()
 
-
     def getMyCards(self, uid):
         return self.gameHost.get_player_status(self.get_internal_index(uid))
-
 
 
 class RoomPool:
     """
     提供一般化的存储方案，如支持内存、sql、redis
     """
+
     def __init__(self):
         self.pool = {}
-        self.idInc = 1  #下一个有效的roomId
+        self.idInc = 1  # 下一个有效的roomId
 
     def _nextId(self):
         a = self.idInc;
@@ -101,7 +99,7 @@ class RoomPool:
         return a
 
     def _createRoom(self) -> Room:
-        room = Room(rid = self._nextId())
+        room = Room(rid=self._nextId())
         self.pool[room.room_id] = room
         return room
 
@@ -112,8 +110,7 @@ class RoomPool:
                 return k
         return 0
 
-
-    def createRoom(self, uid = 0):
+    def createRoom(self, uid=0):
         """uid不为0时，默认创建成果，该uid就加入该room"""
         pass
 
@@ -126,7 +123,7 @@ class RoomPool:
     def leaveRoom(self, uid, roomId):
         pass
 
-    def isRoomExist(self,roomId) -> bool:
+    def isRoomExist(self, roomId) -> bool:
         return roomId in self.pool
 
     def RandomJoinRoom(self, uid) -> int:
@@ -136,7 +133,7 @@ class RoomPool:
             return alreadyRoom
 
         targetRoom = None
-        for k,v in self.pool.items():
+        for k, v in self.pool.items():
             if not v.isFull():
                 targetRoom = v
                 break
@@ -153,11 +150,9 @@ class RoomPool:
         """先不考虑性能优化,roomId为0是为空的意思"""
         return self.pool[roomId]
 
-
     def isUserInRoom(self, uid, roomid):
         if roomid in self.pool:
             return self.pool[roomid].isContainPlayer(uid)
-
 
 
 room_pool = RoomPool()

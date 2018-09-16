@@ -1,7 +1,7 @@
 from tornado.web import RequestHandler, MissingArgumentError
 from RoomPool import room_pool
 import asyncio
-
+from dlog import ddzLog
 
 class BaseHandler(RequestHandler):
     def set_default_headers(self):
@@ -85,7 +85,8 @@ class AskForMasterHandler(BaseHandler):
 
         except MissingArgumentError:
             self.write_para_error()
-        except BaseException:
+        except BaseException as e:
+            ddzLog.error(e)
             self.write_error(500)
 
 
@@ -99,6 +100,7 @@ class DealCardHandler(BaseHandler):
                 room = room_pool.get_room(roomId)
                 dret = room.deal_cards(uid, cards)
                 if dret:
+                    ddzLog.info('valued deal from uid:%s, cards:%s', uid, cards)
                     self.write_success({})
                 else:
                     self.write_my_error(121, 'not value deals')

@@ -1,6 +1,8 @@
 import asyncio
 import tornado.ioloop
 import tornado.web
+from dlog import ddzLog
+
 
 from RoomHandler import  RandomJoinRoomHandler, DealCardHandler, PollChangesHandler,GetMyCardsHandler,AskForMasterHandler
 
@@ -12,6 +14,7 @@ define("debug", default=True, help = "in debug mode")
 
 
 def main():
+    ddzLog.info('doudizhu start...')
     parse_command_line()
     app = tornado.web.Application([
         (r"/dealcard", DealCardHandler),
@@ -21,6 +24,9 @@ def main():
         (r"/askformaster", AskForMasterHandler),
     ], debug = options.debug,
     )
+
+
+
 
     app.listen(options.port)
 
