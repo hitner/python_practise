@@ -1,6 +1,6 @@
 import tornado.locks
 from doudizhu_host import Doudizhu
-
+from dlog import ddzLog
 
 class MessageBuffer:
     def __init__(self):
@@ -28,16 +28,28 @@ class MessageBuffer:
 """
 
 
+
+
 class Room:
-    GameStart = 1
+    EVENT_BID = 100
+    EVENT_STARTED = 110
+    EVENT_PLAY = 111
 
     def __init__(self, rid=0):
         self.room_id = rid
         self.create_time = 0
         self.creator_uid = 0
         self.players = []
+        self.cursor = 0
         self.msgBuffer = MessageBuffer()
         self.gameHost: Doudizhu = Doudizhu()
+
+    def __add_dict_message(self, eventType, msg):
+        self.cursor = self.cursor + 1
+        event = {'cursor':self.cursor,
+                 'eventType': eventType,
+                 'eventContent':msg}
+        self.msgBuffer.add_message(event)
 
     def isFull(self):
         return len(self.players) == 3
@@ -53,7 +65,7 @@ class Room:
     def tryStart(self):
         if len(self.players) == 3:
             self.gameHost.shuffle()
-            self.msgBuffer.add_message({'cursor': self.GameStart})
+            self.__add_dict_message(self.EVENT_BID,{})
 
     def get_internal_index(self, uid):
         return self.players.index(uid)
@@ -61,16 +73,16 @@ class Room:
     def ask_for_master(self, uid) -> bool:
         result = self.gameHost.master_for(self.get_internal_index(uid))
         if result:
-            print(uid, 'ask for master success')
-            self.msgBuffer.add_message(result)
+            ddzLog.info('ask for master success')
+            self.__add_dict_message(self.EVENT_STARTED, result)
         return bool(result)
 
     def deal_cards(self, uid, cs) -> bool:
         cards = bytes.fromhex(cs)
-        result = self.gameHost.dealCard(self.get_internal_index(uid), cards)
+        result = self.gameHost.play_card(self.get_internal_index(uid), cards)
         # 输出这次action { cursor:  cards:  pattern: weight: index:  next_pattern:0}
         if result:
-            self.msgBuffer.add_message(result)
+            self.__add_dict_message(self.EVENT_PLAY, result)
 
         return bool(result)
 
@@ -81,7 +93,9 @@ class Room:
         return self.msgBuffer.cond.wait()
 
     def getMyCards(self, uid):
-        return self.gameHost.get_player_status(self.get_internal_index(uid))
+        describe = self.gameHost.get_player_status(self.get_internal_index(uid))
+        describe['cursor'] = self.cursor
+        return describe
 
 
 class RoomPool:
