@@ -47,7 +47,7 @@ min1_char = range(1, 16)
 
 '''
 min3表示法
-高三位表示花色2 4 6 8，无花色为0
+高三位表示花色2 4 6 8 分别对应方块、梅花、红桃、黑桃，无花色为0
 低五位表示牌
 A   2   3 4         10   J   Q  K   V   W
 14 15   3 。。。     10  11  12 13  16  17
@@ -72,6 +72,12 @@ MIN3_spade = list(range((0x08 << 4) + 3, (0x08 << 4) + 16))
 MIN3_joker = [16, 17]
 
 MIN3_ALL = MIN3_diamond + MIN3_club + MIN3_heart + MIN3_spade + MIN3_joker
+
+
+def min3_doudizhu_cmp(c):
+    '''斗地主中使用的排序方法'''
+    number = (c & 0x1F) << 3
+    return number + (c >> 5)
 
 
 def min3_from_color_visual(cards: str):
