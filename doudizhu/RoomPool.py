@@ -34,6 +34,8 @@ class Room:
     EVENT_BID = 100
     EVENT_STARTED = 110
     EVENT_PLAY = 111
+    EVENT_END = 112
+    EVENT_LEAVE = 113 #玩家在游戏中逃跑
 
     def __init__(self, rid=0):
         self.room_id = rid
@@ -64,8 +66,9 @@ class Room:
 
     def tryStart(self):
         if len(self.players) == 3:
-            self.gameHost.shuffle()
-            self.__add_dict_message(self.EVENT_BID,{})
+            success = self.gameHost.shuffle()
+            if success:
+                self.__add_dict_message(self.EVENT_BID,{})
 
     def get_internal_index(self, uid):
         return self.players.index(uid)
@@ -83,6 +86,9 @@ class Room:
         # 输出这次action { cursor:  cards:  pattern: weight: index:  next_pattern:0}
         if result:
             self.__add_dict_message(self.EVENT_PLAY, result)
+            endInfo = self.gameHost.end_info()
+            if endInfo:
+                self.__add_dict_message(self.EVENT_END, endInfo)
 
         return bool(result)
 
@@ -96,6 +102,21 @@ class Room:
         describe = self.gameHost.get_player_status(self.get_internal_index(uid))
         describe['cursor'] = self.cursor
         return describe
+
+    def leave_room(self, uid):
+        index = self.get_internal_index(uid)
+        leave_msg = self.gameHost.player_leave(index)
+        del self.players[index:index+1]
+        if leave_msg:
+            self.__add_dict_message(self.EVENT_LEAVE, leave_msg)
+
+
+    def restart_game(self):
+        if self.isFull():
+            success = self.gameHost.shuffle()
+            if success:
+                self.__add_dict_message(self.EVENT_BID,{})
+            return True
 
 
 class RoomPool:
@@ -134,8 +155,6 @@ class RoomPool:
         else:
             return False
 
-    def leaveRoom(self, uid, roomId):
-        pass
 
     def isRoomExist(self, roomId) -> bool:
         return roomId in self.pool

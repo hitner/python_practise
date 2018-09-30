@@ -14,7 +14,7 @@
 
 | 字段名 |类型 | 说明 |
 | --- | --- | --- |
-| stage | int | 游戏状态<br>0 未开始 1 叫地主阶段 2出牌阶段 |
+| stage | int | 游戏状态<br>0 未开始 1 叫地主阶段 2出牌阶段 3结束展示阶段 |
 | playerHand | array | 每个玩家的牌 |
 | bottomCards | array | 三张底牌 |
 | master | int | 地主编号[ 0 1 2 ] |
@@ -43,6 +43,7 @@
     * 110 不在此房间
     * 120 比赛未开始
     * 121 无效出牌
+    * 122 人数不足，无法开始
 - 使用tornado long polling 方案
 - pollchanges 返回的消息格式
 
@@ -66,8 +67,9 @@
 - 出牌事件 111
     - 事件内容为出牌结构体
 
-	- 其它说明：
-	    游戏结束由client自己判断（手牌数为0)
+- 牌结束事件 112
+    - unplayedCards: [] 没有出的牌，牌为空的玩家即是赢家
+
 
 - getmycards 获取玩家私有游戏状态 (进房间成功后调用，获得cursor)
 
@@ -81,9 +83,10 @@
 | master | int | stage == 2 时才有 地主
 | bottomCards | int | stage == 2时才有 公共牌
 | playingTrack | array |stage == 2 时 <br> 只返回最后两次出牌的操作<br>（若支持记牌器或机器AI，则返回所有的出牌历史）
+| unplayedCards| array |stage == 3 时传
 
 - React 的state状态
-除了上述getmycards里面的之外还有 一个choosedCard
+除了上述getmycards里面的之外还有 一个choosedCard, 不含cursor
 
 
 - dealcard 出牌

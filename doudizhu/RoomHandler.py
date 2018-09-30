@@ -150,3 +150,44 @@ class PollChangesHandler(BaseHandler):
     def on_connection_close(self):
         if self.wait_future:
             self.wait_future.cancel()
+
+
+class LeaveRoomHandler(BaseHandler):
+    def post(self, *args, **kwargs):
+        try:
+            uid = int(self.get_argument('uid'))
+            roomId = int(self.get_argument('roomId'))
+            if room_pool.isUserInRoom(uid, roomId):
+                room = room_pool.get_room(roomId)
+                room.leave_room(uid)
+                ddzLog.info('player uid:%s, leave room:%s', uid, roomId)
+                self.write_success({})
+            else:
+                self.write_notinroom_error()
+
+        except MissingArgumentError:
+            self.write_para_error()
+        except Exception:
+            self.write_error(500)
+
+
+class RestartGameHandler(BaseHandler):
+    def post(self, *args, **kwargs):
+        try:
+            uid = int(self.get_argument('uid'))
+            roomId = int(self.get_argument('roomId'))
+            if room_pool.isUserInRoom(uid, roomId):
+                room = room_pool.get_room(roomId)
+                ret = room.restart_game()
+                ddzLog.info('player uid:%s in room:%s restart game,result:%s', uid, roomId, ret)
+                if ret:
+                    self.write_success({})
+                else:
+                    self.write_my_error(122, 'player not enough')
+            else:
+                self.write_notinroom_error()
+
+        except MissingArgumentError:
+            self.write_para_error()
+        except Exception:
+            self.write_error(500)

@@ -4,7 +4,10 @@ import tornado.web
 from dlog import ddzLog
 
 
-from RoomHandler import  RandomJoinRoomHandler, DealCardHandler, PollChangesHandler,GetMyCardsHandler,AskForMasterHandler
+from RoomHandler import  RandomJoinRoomHandler, \
+    DealCardHandler, PollChangesHandler,\
+    GetMyCardsHandler,AskForMasterHandler, \
+    LeaveRoomHandler, RestartGameHandler
 
 
 from tornado.options import define, options, parse_command_line
@@ -20,8 +23,10 @@ def main():
         (r"/dealcard", DealCardHandler),
         (r"/getmycards", GetMyCardsHandler),
         (r"/randomjoinroom", RandomJoinRoomHandler),
+        (r"/leaveroom", LeaveRoomHandler),
         (r"/pollchanges", PollChangesHandler),
         (r"/askformaster", AskForMasterHandler),
+        (r"/restartgame", RestartGameHandler)
     ], debug = options.debug,
     )
 

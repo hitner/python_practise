@@ -51,8 +51,11 @@ class Doudizhu:
             'pattern': cd.pattern,
             'weight': cd.weight})
 
-    def shuffle(self):
-        """洗牌，返回一个新的dict"""
+    def shuffle(self, force=False) -> bool:
+        """洗牌，返回True 表示洗牌成功， False表示游戏正在进行中"""
+        if not force:
+            if self.stage == 1 or self.stage == 2:
+                return False
         if not self._deadwood:
             self._deadwood = bytearray(poker.MIN3_ALL)
         else:
@@ -71,6 +74,7 @@ class Doudizhu:
         self.master = -1
         self.stage = 1
         self.playingTrack = []
+        return True
 
     def master_for(self, p_index) -> bool:
         if self.master == -1 and self.stage == 1:
@@ -116,8 +120,31 @@ class Doudizhu:
             ret['cardsRemain'] = remains
             ret['myCards'] = self.playerHand[index].hex()
             ret['myIndex'] = index
-            if self.stage == 2:
+            if self.stage >= 2:
                 ret['master'] = self.master
                 ret['bottomCards'] = self.bottomCards.hex()
                 ret['playingTrack'] = self.playingTrack[-2:]
+            elif self.stage == 3:
+                ret['unplayedCards'] = [self.playerHand[0].hex(),
+                                        self.playerHand[1].hex(),
+                                        self.playerHand[2].hex()]
         return ret
+
+    def end_info(self):
+        if self.stage == 2:
+            if self.playerHand[0] and self.playerHand[1] and self.playerHand[2] :
+                return None
+            else:
+                self.stage = 3
+                return {'unplayedCards':[self.playerHand[0].hex(),
+                                         self.playerHand[1].hex(),
+                                         self.playerHand[2].hex()]}
+
+
+    def player_leave(self, index):
+        if self.stage == 1 or self.stage == 2:
+            self.stage = 0
+            return {'unplayedCards' : [self.playerHand[0].hex(),
+                                     self.playerHand[1].hex(),
+                                     self.playerHand[2].hex()],
+                    'leavePlayer' : index}
