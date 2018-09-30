@@ -63,7 +63,7 @@ class Doudizhu:
             self._deadwood += self.playerHand[1]
             self._deadwood += self.playerHand[2]
         poker.fisher_yates_shuffle(self._deadwood)
-        self.bottomCards = self._deadwood[0:3]
+        self.bottomCards = bytearray(self._deadwood[0:3])
         self.playerHand[0] = bytearray(sorted(self._deadwood[3:54:3],
                                               key = poker.min3_doudizhu_cmp, reverse = True))
         self.playerHand[1] = bytearray(sorted(self._deadwood[4:54:3],
