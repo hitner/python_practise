@@ -96,6 +96,44 @@
     * 目前的策略是先到先得
     
 
+## RESTfull 改造
+
+login              auth/login                POST 登录 uid+token
+                   auth/logout               POST 登出
+
+dealcard,          room/1/playingTrack  POST
+getmycards,        room/1/player/1      GET
+randomjoinroom,    room/0/player        POST 返回roomId 和 playerId
+leaveroom,         room/1/player/1      DELETE
+pollchanges,       room/1/messages      GET (long poll)
+askformaster,      room/1/master-bid    POST
+restartgame,       room/1/ready         POST
+
+
+        一个room里面有下面
+
+        playingTrack
+        player
+        master
+        ready
+
+        room/11  GET 的话，应该返回 played-card master 等等状态
+
+        cursor
+        stage          0 未开始 1 叫地主阶段 2 出牌阶段 3结束阶段
+        cardsRemain    stage >=1 时
+        master         stage >=2 传
+        bottomCards    stage >=2 传
+        playingTrack   stage >=2 传
+        unplayedCards  stage == 3传
+
+        关键是获取某个player的视角 还是那些牌，这样的好处就是支持旁观者
+
+### ToDos
+
+* Unit Test 单元测试
+* 改造 全局改造，异步化改造
+
 
 # 包牌
 

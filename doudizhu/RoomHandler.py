@@ -4,6 +4,13 @@ import asyncio
 from dlog import ddzLog
 
 class BaseHandler(RequestHandler):
+    COOKIE_NAME = 'session'
+    def get_current_user(self):
+        session :str = self.get_secure_cookie(self.COOKIE_NAME)
+        if session:
+            sep = session.split('-',1)
+            return int(sep[0])
+
     def set_default_headers(self):
         self.set_header("Access-Control-Allow-Origin", "*")
         self.set_header("Access-Control-Allow-Headers", "Content-Type, X-Requested-With")
@@ -13,21 +20,75 @@ class BaseHandler(RequestHandler):
     def write_success(self, data):
         self.write({'rcode': 0, 'data': data})
 
-    def write_my_error(self, rcode, describe):
-        self.write({'rcode': rcode, 'describe': describe})
+    def write_user_layer_error(self, rcode, describe):
+        self.write({'rocode':rcode, 'describe':describe})
+        
+    def write_code_layer_error(self, rcode, describe):
+        self.set_status(rcode)
+        self.finish(describe)
 
-    def write_para_error(self):
-        self.write_my_error(100, "para error")
+    def write_para_error(self, para):
+        self.write_code_layer_error(400, 'Error: need para' + ', '.join(para))
 
     def write_notinroom_error(self):
-        self.write_my_error(110, "not in room")
+        self.write_code_layer_error(430, "Error: not in room")
 
-    def write_nocards_error(self):
-        self.write_my_error(120, "no cards becouse of match not started")
 
     def options(self, *args, **kwargs):
         self.set_status(204)
         self.finish()
+
+    def get(self, *args, **kwargs):
+        self.reply405()
+        
+    def post(self, *args, **kwargs):
+        self.reply405()
+    
+    def put(self, *args, **kwargs):
+        self.reply405()
+    
+    def delete(self, *args, **kwargs):
+        self.reply405()
+    
+    def patch(self, *args, **kwargs):
+        self.reply405()
+        
+    def reply405(self):
+        self.set_status(405)
+        allow = ', '.join(self.ALLOWED_METHODS)
+        self.add_header('Allow',allow)
+        self.finish('Error: method not allowed, only for ' + allow)
+
+
+
+class DdzAuthLoginHandler(BaseHandler):
+    ALLOWED_METHODS = ['POST']
+    def post(self, *args, **kwargs):
+        uid = self.get_argument('uid', '')
+        if uid:
+            token = 'THESE IS A FAKE TOKEN'
+            self.set_secure_cookie(self.COOKIE_NAME, uid + ':' + token)
+            self.write_success({})
+        else:
+            self.write_para_error(['uid'])
+
+
+class DdzAuthLogoutHandler(BaseHandler):
+    ALLOWED_METHODS = ['POST']
+    def post(self, *args, **kwargs):
+        if self.current_user:
+            self.clear_all_cookies()
+            self.write_success({})
+        else:
+            self.write_code_layer_error(403, 'Error: unvalue login')
+
+
+class DdzRoomHandler(BaseHandler):
+    ALLOWED_METHODS = ['POST']
+    def post(self, *args, **kwargs):
+        print(args, kwargs)
+        self.write_success({'mgs':'ok'})
+
 
 
 class RandomJoinRoomHandler(BaseHandler):
@@ -39,7 +100,7 @@ class RandomJoinRoomHandler(BaseHandler):
         except MissingArgumentError:
             self.write_para_error()
         except Exception:
-            self.write_error(500)
+            self.send_error(500)
 
     def post(self, *args, **kwargs):
         self.get()
@@ -62,13 +123,13 @@ class GetMyCardsHandler(BaseHandler):
         except MissingArgumentError:
             self.write_para_error()
         except Exception:
-            self.write_error(500)
+            self.send_error(500)
 
     def post(self, *args, **kwargs):
         self.get()
 
 
-class AskForMasterHandler(BaseHandler):
+class DdzRoomMasterBidHandler(BaseHandler):
     def post(self, *args, **kwargs):
         try:
             uid = int(self.get_argument('uid'))
@@ -79,7 +140,7 @@ class AskForMasterHandler(BaseHandler):
                 if dret:
                     self.write_success({})
                 else:
-                    self.write_my_error(122, 'already has a master')
+                    self.write_code_layer_error(440, 'already has a master')
             else:
                 self.write_notinroom_error()
 
@@ -87,14 +148,14 @@ class AskForMasterHandler(BaseHandler):
             self.write_para_error()
         except BaseException as e:
             ddzLog.error(e)
-            self.write_error(500)
+            self.send_error(500)
 
 
-class DealCardHandler(BaseHandler):
-    def get(self, *args, **kwargs):
+class DdzRoomPlayedCardsHandler(BaseHandler):
+    def post(self, *args, **kwargs):
         try:
             uid = int(self.get_argument('uid'))
-            roomId = int(self.get_argument('roomId'))
+            roomId = int(args[0])
             cards = self.get_argument('cards', default='')
             if room_pool.isUserInRoom(uid, roomId):
                 room = room_pool.get_room(roomId)
@@ -103,29 +164,25 @@ class DealCardHandler(BaseHandler):
                     ddzLog.info('valued deal from uid:%s, cards:%s', uid, cards)
                     self.write_success({})
                 else:
-                    self.write_my_error(121, 'not value deals')
+                    self.write_code_layer_error(441, 'not value deals')
             else:
                 self.write_notinroom_error()
 
         except MissingArgumentError:
             self.write_para_error()
         except Exception:
-            self.write_error(500)
-
-    def post(self, *args, **kwargs):
-        self.get()
+            self.send_error(500)
 
 
-class PollChangesHandler(BaseHandler):
 
-    async def post(self, *args, **kwargs):
+class DdzRoomMessagesHandler(BaseHandler):
+
+    async def get(self, *args, **kwargs):
         try:
-            uid = int(self.get_argument('uid'))
-            roomId = int(self.get_argument('roomId'))
-            cursor = int(self.get_argument('cursor'))
-
-            if room_pool.isUserInRoom(uid, roomId):
-                room = room_pool.get_room(roomId)
+            roomId = int(args[0])
+            room = room_pool.get_room(roomId)
+            if room:
+                cursor = int(self.get_argument('cursor'))
                 msgs = room.getRoomMessages(cursor)
                 while not msgs:
                     self.wait_future = room.wait()
@@ -140,19 +197,19 @@ class PollChangesHandler(BaseHandler):
                 self.write_success(msgs)
 
             else:
-                self.write_notinroom_error()
+                self.send_error(404)
 
         except MissingArgumentError:
-            self.write_para_error()
-        except Exception as e:
-            self.write_error(500)
+            self.write_para_error(['cursor'])
+        except BaseException as e:
+            self.send_error(500)
 
     def on_connection_close(self):
         if self.wait_future:
             self.wait_future.cancel()
 
 
-class LeaveRoomHandler(BaseHandler):
+class DdzRoomPlayerHandler(BaseHandler):
     def post(self, *args, **kwargs):
         try:
             uid = int(self.get_argument('uid'))
@@ -168,10 +225,19 @@ class LeaveRoomHandler(BaseHandler):
         except MissingArgumentError:
             self.write_para_error()
         except Exception:
-            self.write_error(500)
+            self.send_error(500)
+
+    def get(self, *args, **kwargs):
+        pass
+
+    def delete(self, *args, **kwargs):
+        if len(args) < 2 :
+            self.send_error(405)
 
 
-class RestartGameHandler(BaseHandler):
+
+
+class DdzRoomReadyHandler(BaseHandler):
     def post(self, *args, **kwargs):
         try:
             uid = int(self.get_argument('uid'))
@@ -183,11 +249,11 @@ class RestartGameHandler(BaseHandler):
                 if ret:
                     self.write_success({})
                 else:
-                    self.write_my_error(122, 'player not enough')
+                    self.write_code_layer_error(122, 'player not enough')
             else:
                 self.write_notinroom_error()
 
         except MissingArgumentError:
             self.write_para_error()
         except Exception:
-            self.write_error(500)
+            self.send_error(500)

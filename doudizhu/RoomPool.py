@@ -181,7 +181,9 @@ class RoomPool:
 
     def get_room(self, roomId) -> Room:
         """先不考虑性能优化,roomId为0是为空的意思"""
-        return self.pool[roomId]
+        if roomId in self.pool:
+            return self.pool[roomId]
+
 
     def isUserInRoom(self, uid, roomid):
         if roomid in self.pool:
