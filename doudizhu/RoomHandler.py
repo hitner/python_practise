@@ -1,7 +1,7 @@
 from tornado.web import RequestHandler, MissingArgumentError
 from RoomPool import room_pool
 import asyncio
-from dlog import ddzLog
+from dlog import ddzlog
 
 class BaseHandler(RequestHandler):
     COOKIE_NAME = 'session'
@@ -147,7 +147,7 @@ class DdzRoomMasterBidHandler(BaseHandler):
         except MissingArgumentError:
             self.write_para_error()
         except BaseException as e:
-            ddzLog.error(e)
+            ddzlog.error(e)
             self.send_error(500)
 
 
@@ -161,7 +161,7 @@ class DdzRoomPlayedCardsHandler(BaseHandler):
                 room = room_pool.get_room(roomId)
                 dret = room.deal_cards(uid, cards)
                 if dret:
-                    ddzLog.info('valued deal from uid:%s, cards:%s', uid, cards)
+                    ddzlog.info('valued deal from uid:%s, cards:%s', uid, cards)
                     self.write_success({})
                 else:
                     self.write_code_layer_error(441, 'not value deals')
@@ -217,7 +217,7 @@ class DdzRoomPlayerHandler(BaseHandler):
             if room_pool.isUserInRoom(uid, roomId):
                 room = room_pool.get_room(roomId)
                 room.leave_room(uid)
-                ddzLog.info('player uid:%s, leave room:%s', uid, roomId)
+                ddzlog.info('player uid:%s, leave room:%s', uid, roomId)
                 self.write_success({})
             else:
                 self.write_notinroom_error()
@@ -245,7 +245,7 @@ class DdzRoomReadyHandler(BaseHandler):
             if room_pool.isUserInRoom(uid, roomId):
                 room = room_pool.get_room(roomId)
                 ret = room.restart_game()
-                ddzLog.info('player uid:%s in room:%s restart game,result:%s', uid, roomId, ret)
+                ddzlog.info('player uid:%s in room:%s restart game,result:%s', uid, roomId, ret)
                 if ret:
                     self.write_success({})
                 else:

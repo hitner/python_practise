@@ -1,14 +1,4 @@
-from logging import Logger, FileHandler, StreamHandler
-import logging
-import sys
+import unique_log
 
-ddzLog = Logger('doudizhu')
 
-hdlr = FileHandler('ddz.log')
-hdlr.setLevel(logging.INFO)
-
-terminal = StreamHandler(sys.stdout)
-terminal.setLevel(logging.WARN)
-
-ddzLog.addHandler(hdlr)
-ddzLog.addHandler(terminal)
+ddzlog = unique_log.create_logger('doudizhu', 'ddz.log')

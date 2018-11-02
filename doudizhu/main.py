@@ -1,8 +1,14 @@
 import asyncio
 import tornado.ioloop
 import tornado.web
-from dlog import ddzLog
+import sys
+import os
+sys.path.append(os.path.join(os.pardir, 'server_common'))
+
+
 import RoomHandler
+
+from dlog import ddzlog
 
 from tornado.options import define, options, parse_command_line
 
@@ -11,7 +17,7 @@ define("debug", default=True, help = "in debug mode")
 
 
 def main():
-    ddzLog.info('doudizhu start...')
+    ddzlog.info('doudizhu start...')
     parse_command_line()
     settings = dict(
         cookie_secret = "0fa2ds88fce9dcb225c0fpda8bd7b3kbcd46b2",

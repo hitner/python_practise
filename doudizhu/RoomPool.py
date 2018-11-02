@@ -1,6 +1,6 @@
 import tornado.locks
 from doudizhu_host import Doudizhu
-from dlog import ddzLog
+from dlog import ddzlog
 
 class MessageBuffer:
     def __init__(self):
@@ -76,7 +76,7 @@ class Room:
     def ask_for_master(self, uid) -> bool:
         result = self.gameHost.master_for(self.get_internal_index(uid))
         if result:
-            ddzLog.info('ask for master success')
+            ddzlog.info('ask for master success')
             self.__add_dict_message(self.EVENT_STARTED, result)
         return bool(result)
 
