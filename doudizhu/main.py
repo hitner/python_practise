@@ -12,7 +12,7 @@ from dlog import ddzlog
 
 from tornado.options import define, options, parse_command_line
 
-define("port", default=8880, help="port given", type=int)
+define("port", default=8881, help="port given", type=int)
 define("debug", default=True, help = "in debug mode")
 
 
@@ -24,8 +24,6 @@ def main():
         debug = options.debug
     )
     app = tornado.web.Application([
-        (r"/auth/login",RoomHandler.DdzAuthLoginHandler),
-        (r"/auth/logout", RoomHandler.DdzAuthLogoutHandler),
         (r"/doudizhu/room/([0-9]+)", RoomHandler.DdzRoomHandler),
         (r"/doudizhu/room/([0-9]+)/messages", RoomHandler.DdzRoomMessagesHandler),
         (r"/doudizhu/room/([0-9]+)/players/([0-2]?)", RoomHandler.DdzRoomPlayerHandler), #support GET POST DELETER

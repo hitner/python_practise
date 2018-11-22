@@ -1,89 +1,12 @@
 from tornado.web import RequestHandler, MissingArgumentError
+import http_base_handler
 from RoomPool import room_pool
 import asyncio
 from dlog import ddzlog
 
-class BaseHandler(RequestHandler):
-    COOKIE_NAME = 'session'
-    def get_current_user(self):
-        session :str = self.get_secure_cookie(self.COOKIE_NAME)
-        if session:
-            sep = session.split('-',1)
-            return int(sep[0])
-
-    def set_default_headers(self):
-        self.set_header("Access-Control-Allow-Origin", "*")
-        self.set_header("Access-Control-Allow-Headers", "Content-Type, X-Requested-With")
-        self.set_header('Access-Control-Allow-Methods', 'POST, GET, OPTIONS')
-        #pass
-
-    def write_success(self, data):
-        self.write({'rcode': 0, 'data': data})
-
-    def write_user_layer_error(self, rcode, describe):
-        self.write({'rocode':rcode, 'describe':describe})
-        
-    def write_code_layer_error(self, rcode, describe):
-        self.set_status(rcode)
-        self.finish(describe)
-
-    def write_para_error(self, para):
-        self.write_code_layer_error(400, 'Error: need para' + ', '.join(para))
-
-    def write_notinroom_error(self):
-        self.write_code_layer_error(430, "Error: not in room")
 
 
-    def options(self, *args, **kwargs):
-        self.set_status(204)
-        self.finish()
-
-    def get(self, *args, **kwargs):
-        self.reply405()
-        
-    def post(self, *args, **kwargs):
-        self.reply405()
-    
-    def put(self, *args, **kwargs):
-        self.reply405()
-    
-    def delete(self, *args, **kwargs):
-        self.reply405()
-    
-    def patch(self, *args, **kwargs):
-        self.reply405()
-        
-    def reply405(self):
-        self.set_status(405)
-        allow = ', '.join(self.ALLOWED_METHODS)
-        self.add_header('Allow',allow)
-        self.finish('Error: method not allowed, only for ' + allow)
-
-
-
-class DdzAuthLoginHandler(BaseHandler):
-    ALLOWED_METHODS = ['POST']
-    def post(self, *args, **kwargs):
-        uid = self.get_argument('uid', '')
-        if uid:
-            token = 'THESE IS A FAKE TOKEN'
-            self.set_secure_cookie(self.COOKIE_NAME, uid + ':' + token)
-            self.write_success({})
-        else:
-            self.write_para_error(['uid'])
-
-
-class DdzAuthLogoutHandler(BaseHandler):
-    ALLOWED_METHODS = ['POST']
-    def post(self, *args, **kwargs):
-        if self.current_user:
-            self.clear_all_cookies()
-            self.write_success({})
-        else:
-            self.write_code_layer_error(403, 'Error: unvalue login')
-
-
-class DdzRoomHandler(BaseHandler):
+class DdzRoomHandler(http_base_handler.BaseHandler):
     ALLOWED_METHODS = ['POST']
     def post(self, *args, **kwargs):
         print(args, kwargs)
@@ -91,7 +14,7 @@ class DdzRoomHandler(BaseHandler):
 
 
 
-class RandomJoinRoomHandler(BaseHandler):
+class RandomJoinRoomHandler(http_base_handler.BaseHandler):
     def get(self, *args, **kwargs):
         try:
             uid = int(self.get_argument('uid'))
@@ -106,7 +29,7 @@ class RandomJoinRoomHandler(BaseHandler):
         self.get()
 
 
-class GetMyCardsHandler(BaseHandler):
+class GetMyCardsHandler(http_base_handler.BaseHandler):
     def get(self, *args, **kwargs):
         try:
             uid = int(self.get_argument('uid'))
@@ -129,7 +52,7 @@ class GetMyCardsHandler(BaseHandler):
         self.get()
 
 
-class DdzRoomMasterBidHandler(BaseHandler):
+class DdzRoomMasterBidHandler(http_base_handler.BaseHandler):
     def post(self, *args, **kwargs):
         try:
             uid = int(self.get_argument('uid'))
@@ -151,7 +74,7 @@ class DdzRoomMasterBidHandler(BaseHandler):
             self.send_error(500)
 
 
-class DdzRoomPlayedCardsHandler(BaseHandler):
+class DdzRoomPlayedCardsHandler(http_base_handler.BaseHandler):
     def post(self, *args, **kwargs):
         try:
             uid = int(self.get_argument('uid'))
@@ -175,7 +98,7 @@ class DdzRoomPlayedCardsHandler(BaseHandler):
 
 
 
-class DdzRoomMessagesHandler(BaseHandler):
+class DdzRoomMessagesHandler(http_base_handler.BaseHandler):
 
     async def get(self, *args, **kwargs):
         try:
@@ -209,7 +132,7 @@ class DdzRoomMessagesHandler(BaseHandler):
             self.wait_future.cancel()
 
 
-class DdzRoomPlayerHandler(BaseHandler):
+class DdzRoomPlayerHandler(http_base_handler.BaseHandler):
     def post(self, *args, **kwargs):
         try:
             uid = int(self.get_argument('uid'))
@@ -237,7 +160,7 @@ class DdzRoomPlayerHandler(BaseHandler):
 
 
 
-class DdzRoomReadyHandler(BaseHandler):
+class DdzRoomReadyHandler(http_base_handler.BaseHandler):
     def post(self, *args, **kwargs):
         try:
             uid = int(self.get_argument('uid'))
