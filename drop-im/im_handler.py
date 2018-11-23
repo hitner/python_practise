@@ -38,7 +38,6 @@ class MasterSendHandler(http_base_handler.BaseHandler):
 
 class MasterSyncMessageHandler(http_base_handler.BaseHandler):
     ALLOWED_METHODS = ['GET']
-    wait_future = None
 
     async def get(self, *args, **kwargs):
         token = self.get_query_argument('session', '')
@@ -48,15 +47,16 @@ class MasterSyncMessageHandler(http_base_handler.BaseHandler):
             session = session_manager.session_from(token)
             if session:
                 msgs = session.get_msgs(seq)
-                while not msgs:
-                    self.wait_future = session.wait()
+                if not msgs:
                     try:
-                        await self.wait_future
+                        await session.wait()
                     except asyncio.CancelledError:
-                        return
-                    msgs = session.get_msgs(seq)
-
-                self.write_success_dict(msgs)
+                        print('cancelled')
+                        msgs = []
+                msgs = session.get_msgs(seq)
+                if not msgs:
+                    msgs = []
+                self.write_success_dict({'msgs' : msgs})
             else:
                 self.write_user_layer_error(1, 'session 失效')
 
@@ -92,15 +92,17 @@ class SlaveSyncMessageHandler(http_base_handler.BaseHandler):
             session = session_manager.session_from(token)
             if session:
                 msgs = session.get_msgs(seq, 1)
-                while not msgs:
-                    self.wait_future = session.wait(1)
+                if not msgs:
                     try:
-                        await self.wait_future
+                        await session.wait(1)
                     except asyncio.CancelledError:
-                        return
-                    msgs = session.get_msgs(seq, 1)
+                        print('cancelled')
+                        msgs = []
+                msgs = session.get_msgs(seq, 1)
+                if not msgs:
+                    msgs = []
 
-                self.write_success_dict(msgs)
+                self.write_success_dict({'msgs':msgs})
             else:
                 self.write_user_layer_error(1, 'session 失效')
 

@@ -7,12 +7,15 @@ sys.path.append(os.path.join(os.pardir, 'server_common'))
 
 from unique_log import common_log
 import im_handler
+import session_manager
 
 from tornado.options import define, options, parse_command_line
 
-define("port", default=8883, help="port given", type=int)
+define("port", default=9999, help="port given", type=int)
 define("debug", default=True, help = "in debug mode")
 
+def test():
+    print('hello world')
 
 def main():
     common_log.info('drop im module start...')
@@ -34,6 +37,8 @@ def main():
 
 
     app.listen(options.port)
+
+    session_manager.start_period_check()
 
     tornado.ioloop.IOLoop.current().start()
 

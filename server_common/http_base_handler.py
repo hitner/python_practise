@@ -15,6 +15,7 @@ class BaseHandler(RequestHandler):
             self.set_header("Access-Control-Allow-Origin", "*")
             self.set_header("Access-Control-Allow-Headers", "Content-Type, X-Requested-With")
             self.set_header('Access-Control-Allow-Methods', ', '.join(self.ALLOWED_METHODS))
+            self.set_header('Access-Control-Max-Age', "600")
             self.set_status(200)
             self.finish()
         else:
