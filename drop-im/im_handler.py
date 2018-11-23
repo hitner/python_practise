@@ -1,4 +1,5 @@
 from tornado.web import RequestHandler
+from qiniu_token import create_qiniu_token
 import json
 import asyncio
 import http_base_handler
@@ -71,7 +72,8 @@ class SlaveConnectHandler(http_base_handler.BaseHandler):
         token = self.get_query_argument('token','')
         if token:
             session = session_manager.session_from(token)
-            if session and session.state == session.WAITING_SLAVE:
+            if session and session.is_slave_not_in():
+                session.slave_in()
                 self.write_success_dict({'token': token})
             else:
                 self.write_user_layer_error(1, 'session 失效')
@@ -126,3 +128,20 @@ class SlaveSendHandler(http_base_handler.BaseHandler):
                 self.write_bad_request('not a json string')
         else:
             self.write_error_parameter(['token'])
+
+
+class QiniuTokenHandler(http_base_handler.BaseHandler):
+    ALLOWED_METHODS = ['GET']
+
+    def get(self, *args, **kwargs):
+        token = self.get_query_argument('session', '')
+        if token:
+            session = session_manager.session_from(token)
+            if session:
+                qiniu = create_qiniu_token(token)
+                self.write_success_dict({'qiniuToken':qiniu})
+            else:
+                self.write_user_layer_error(1, 'session 失效')
+
+        else:
+            self.write_error_parameter(['session'])

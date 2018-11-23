@@ -8,11 +8,13 @@ sys.path.append(os.path.join(os.pardir, 'server_common'))
 from unique_log import common_log
 import im_handler
 import session_manager
+import qiniu_token
 
 from tornado.options import define, options, parse_command_line
 
 define("port", default=9999, help="port given", type=int)
 define("debug", default=True, help = "in debug mode")
+define("secret")
 
 def test():
     print('hello world')
@@ -23,6 +25,7 @@ def main():
     settings = dict(
         debug = options.debug
     )
+    qiniu_token.qiniu_secret = options.secret
     app = tornado.web.Application([
         (r"/dropim/getConnectionAttribute", im_handler.MasterCreateHandler),
         (r"/dropim/webSend", im_handler.MasterSendHandler),
@@ -30,6 +33,7 @@ def main():
         (r"/dropim/connect", im_handler.SlaveConnectHandler),
         (r"/dropim/syncClientMessages",im_handler.SlaveSyncMessageHandler),
         (r"/dropim/clientSend",im_handler.SlaveSendHandler),
+        (r"/dropim/getQiniuToken",im_handler.QiniuTokenHandler),
     ], **settings,
     )
 

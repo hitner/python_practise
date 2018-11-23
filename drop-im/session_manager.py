@@ -67,6 +67,9 @@ class Session:
         self.state = CONNECTED
         self.slave_send_msgs_buffer.add_message({'cmd': 1})
 
+    def is_slave_not_in(self):
+        return self.state == WAITING_SLAVE
+
     def is_valued(self):
         now_time = IOLoop.current().time()
         if now_time - self.slave_last_req_time > DESTROY_TIMEOUT and \
