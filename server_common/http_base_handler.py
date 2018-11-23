@@ -42,7 +42,7 @@ class BaseHandler(RequestHandler):
         self.finish('Error: method not allowed, only for ' + allow)
 
     def write(self, chunk):
-        if __debug__ and self.request.method != 'OPTIONS':
+        if __debug__ and self.request.method != 'OPTIONS' and 'Origin' in self.request.headers :
             origin = self.request.headers['Origin']
             if origin:
                 self.add_header("Access-Control-Allow-Origin", origin)
@@ -59,8 +59,8 @@ class BaseHandler(RequestHandler):
         self.set_status(rcode)
         self.finish(describe)
 
-    def write_bad_request(self, descibe):
-        self.write_code_layer_error(400, descibe)
+    def write_bad_request(self, describe):
+        self.write_code_layer_error(400, describe)
 
     def write_error_parameter(self, para):
         self.write_code_layer_error(400, 'Error: need para ' + ', '.join(para))

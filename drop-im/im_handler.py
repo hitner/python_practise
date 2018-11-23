@@ -4,6 +4,7 @@ import asyncio
 import http_base_handler
 import session_manager
 
+HOST = 'http://192.168.10.237:8881/dropim/connect'
 
 class MasterCreateHandler(http_base_handler.BaseHandler):
     ALLOWED_METHODS = ['GET']
@@ -11,7 +12,7 @@ class MasterCreateHandler(http_base_handler.BaseHandler):
     def get(self, *args, **kwargs):
         session = session_manager.create_session()
         self.write_success_dict({'session':session.token,
-                                 'QRCodeUrl':'http://192.168.10.237:8881/dropim/connect'})
+                                 'QRCodeUrl': HOST+'?token='+session.token})
 
 
 
@@ -41,20 +42,21 @@ class MasterSyncMessageHandler(http_base_handler.BaseHandler):
 
     async def get(self, *args, **kwargs):
         token = self.get_query_argument('session', '')
-        seq = self.get_query_argument('seq', '')
-        if token and seq :
+        seq = self.get_query_argument('seq', '-1')
+        seq = int(seq)
+        if token and seq >= 0:
             session = session_manager.session_from(token)
             if session:
-                msgs = session.master_get_msgs(seq)
+                msgs = session.get_msgs(seq)
                 while not msgs:
-                    self.wait_future = session.master_wait()
+                    self.wait_future = session.wait()
                     try:
                         await self.wait_future
                     except asyncio.CancelledError:
                         return
-                    msgs = session.master_get_msgs(seq)
+                    msgs = session.get_msgs(seq)
 
-                self.write_success_dict(msgs, seq)
+                self.write_success_dict(msgs)
             else:
                 self.write_user_layer_error(1, 'session 失效')
 
@@ -68,37 +70,57 @@ class SlaveConnectHandler(http_base_handler.BaseHandler):
     def get(self, *args, **kwargs):
         token = self.get_query_argument('token','')
         if token:
-            try:
-                msg = json.loads(self.request.body)
-                if session_manager.master_send_msg(token, msg):
-                    self.write_success_dict({})
-                else:
-                    self.write_user_layer_error(1,'session 失效')
-            except json.JSONDecodeError:
-                self.write_bad_request('not a json string')
+            session = session_manager.session_from(token)
+            if session and session.state == session.WAITING_SLAVE:
+                self.write_success_dict({'token': token})
+            else:
+                self.write_user_layer_error(1, 'session 失效')
         else:
-            self.write_error_parameter(['session'])
+            self.write_error_parameter(['token'])
 
 
 class SlaveSyncMessageHandler(http_base_handler.BaseHandler):
-    ALLOWED_METHODS = ['POST']
+    ALLOWED_METHODS = ['GET']
 
-    def post(self, *args, **kwargs):
-        uid = self.get_argument('uid', '')
-        if uid:
-            token = 'THESE IS A FAKE TOKEN'
-            self.set_secure_cookie(self.COOKIE_NAME, uid + ':' + token)
-            self.write_success_dict({})
+    wait_future = None
+
+    async def get(self, *args, **kwargs):
+        token = self.get_query_argument('token', '')
+        seq = self.get_query_argument('seq', '-1')
+        seq = int(seq)
+        if token and seq >= 0:
+            session = session_manager.session_from(token)
+            if session:
+                msgs = session.get_msgs(seq, 1)
+                while not msgs:
+                    self.wait_future = session.wait(1)
+                    try:
+                        await self.wait_future
+                    except asyncio.CancelledError:
+                        return
+                    msgs = session.get_msgs(seq, 1)
+
+                self.write_success_dict(msgs)
+            else:
+                self.write_user_layer_error(1, 'session 失效')
+
         else:
-            self.write_error_parameter(['uid'])
+            self.write_error_parameter(['token', 'seq'])
 
 
 class SlaveSendHandler(http_base_handler.BaseHandler):
     ALLOWED_METHODS = ['POST']
 
     def post(self, *args, **kwargs):
-        if self.current_user:
-            self.clear_all_cookies()
-            self.write_success_dict({})
+        token = self.get_query_argument('token','')
+        if token:
+            try:
+                msg = json.loads(self.request.body)
+                if session_manager.slave_send_msg(token, msg):
+                    self.write_success_dict({})
+                else:
+                    self.write_user_layer_error(1,'token 失效')
+            except json.JSONDecodeError:
+                self.write_bad_request('not a json string')
         else:
-            self.write_code_layer_error(403, 'Error: unvalue login')
+            self.write_error_parameter(['token'])

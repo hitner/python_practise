@@ -28,22 +28,30 @@ class MessageBuffer:
 
 
 class Session:
+    WAITING_SLAVE = 1
+    CONNECTED = 2
+
     def __init__(self, tk):
         self.token = tk
+        self.state = self.WAITING_SLAVE
         self.master_send_msgs_buffer = MessageBuffer()
         self.slave_send_msgs_buffer = MessageBuffer()
 
-    def master_get_msgs(self,seq):
-        self.slave_send_msgs_buffer.get_message_since(seq)
+    def get_msgs(self,seq, is_slave=0):
+        if not is_slave:
+            return self.slave_send_msgs_buffer.get_message_since(seq)
+        else:
+            return self.master_send_msgs_buffer.get_message_since(seq)
 
-    def slave_get_msgs(self,seq):
-        self.master_send_msgs_buffer.get_message_since(seq)
+    def wait(self, is_slave=0):
+        if not is_slave:
+            return self.slave_send_msgs_buffer.cond.wait()
+        else:
+            return self.master_send_msgs_buffer.cond.wait()
 
-    def master_wait(self):
-        return self.slave_send_msgs_buffer.cond.wait()
-
-    def slave_wait(self):
-        return self.master_send_msgs_buffer.cond.wait()
+    def slave_in(self):
+        self.state = self.CONNECTED
+        self.slave_send_msgs_buffer.add_message({'cmd': 1})
 
 
 def create_session():
@@ -56,11 +64,24 @@ def create_session():
 
 
 def master_send_msg(token, msg):
+    if token not in session_pool:
+        return None
     session = session_pool[token]
     if session:
         session.master_send_msgs_buffer.add_message(msg)
         return True
 
 
+def slave_send_msg(token, msg):
+    if token not in session_pool:
+        return None
+    session = session_pool[token]
+    if session:
+        session.slave_send_msgs_buffer.add_message(msg)
+        return True
+
+
 def session_from(token):
-    return session_pool[token]
+    if token in session_pool:
+        return session_pool[token]
+
