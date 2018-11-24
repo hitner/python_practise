@@ -64,6 +64,9 @@ class MasterSyncMessageHandler(http_base_handler.BaseHandler):
         else:
             self.write_error_parameter(['session', 'seq'])
 
+    def compute_etag(self):
+        return None
+
 
 class SlaveConnectHandler(http_base_handler.BaseHandler):
     ALLOWED_METHODS = ['GET']
@@ -110,6 +113,9 @@ class SlaveSyncMessageHandler(http_base_handler.BaseHandler):
 
         else:
             self.write_error_parameter(['token', 'seq'])
+
+    def compute_etag(self):
+        return None
 
 
 class SlaveSendHandler(http_base_handler.BaseHandler):

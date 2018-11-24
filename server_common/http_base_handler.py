@@ -43,8 +43,8 @@ class BaseHandler(RequestHandler):
         self.finish('Error: method not allowed, only for ' + allow)
 
     def write(self, chunk):
-        if __debug__ and self.request.method != 'OPTIONS' and 'Origin' in self.request.headers :
-            origin = self.request.headers['Origin']
+        if __debug__ and self.request.method != 'OPTIONS' :
+            origin = self.request.headers.get('Origin')
             if origin:
                 self.add_header("Access-Control-Allow-Origin", origin)
         super(BaseHandler, self).write(chunk)
