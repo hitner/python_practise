@@ -8,10 +8,14 @@ def create_logger(name, filename):
     log = Logger(name)
     hdlr = FileHandler(filename)
     hdlr.setLevel(logging.INFO)
-    terminal = StreamHandler(sys.stdout)
-    terminal.setLevel(logging.WARN)
+
+    f = logging.Formatter('%(asctime)s %(process)d %(levelname)s:%(message)s')
+    hdlr.setFormatter(f)
     log.addHandler(hdlr)
-    log.addHandler(terminal)
+    if __debug__:
+        terminal = StreamHandler(sys.stdout)
+        terminal.setLevel(logging.DEBUG)
+        log.addHandler(terminal)
     return log
 
 

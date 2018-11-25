@@ -3,6 +3,7 @@ import tornado.ioloop
 import tornado.web
 import sys
 import os
+import tornado.log
 sys.path.append(os.path.join(os.pardir, 'server_common'))
 
 from unique_log import common_log
@@ -21,6 +22,7 @@ def test():
 
 def main():
     common_log.info('drop im module start...')
+    tornado.log.app_log.info('tornado self')
     parse_command_line()
     settings = dict(
         debug = options.debug

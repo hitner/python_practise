@@ -69,3 +69,8 @@ class BaseHandler(RequestHandler):
     def write_error_not_there(self):
         self.write_code_layer_error(430, "Error: not in room/env")
 
+    #utility set
+
+    def set_no_cache(self):
+        self.set_header('Cache-Control', 'no-cache')
+
