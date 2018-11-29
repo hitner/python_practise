@@ -46,7 +46,7 @@ class BaseHandler(RequestHandler):
         if __debug__ and self.request.method != 'OPTIONS' :
             origin = self.request.headers.get('Origin')
             if origin:
-                self.add_header("Access-Control-Allow-Origin", origin)
+                self.set_header("Access-Control-Allow-Origin", origin)
         super(BaseHandler, self).write(chunk)
 
     def write_success_dict(self, data):

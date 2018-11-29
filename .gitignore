@@ -1,6 +1,7 @@
 # system
 nohup.out
 .DS_Store
+__ignore_*
 # pycharm
 .idea/
 # Byte-compiled / optimized / DLL files

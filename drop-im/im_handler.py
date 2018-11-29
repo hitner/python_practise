@@ -4,7 +4,7 @@ import json
 import asyncio
 import http_base_handler
 import session_manager
-from tornado import log
+
 
 HOST = 'http://192.168.10.237:8881/dropim/connect'
 
@@ -12,9 +12,6 @@ class MasterCreateHandler(http_base_handler.BaseHandler):
     ALLOWED_METHODS = ['GET']
 
     def get(self, *args, **kwargs):
-        log.app_log.error('bad')
-        log.access_log.info('whi')
-        log.gen_log.warn('sdkf')
         session = session_manager.create_session()
         self.write_success_dict({'session':session.token,
                                  'QRCodeUrl': HOST+'?token='+session.token})

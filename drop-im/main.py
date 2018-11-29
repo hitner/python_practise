@@ -3,10 +3,10 @@ import tornado.ioloop
 import tornado.web
 import sys
 import os
-import tornado.log
+from tornado.log import gen_log, app_log
+import logging
 sys.path.append(os.path.join(os.pardir, 'server_common'))
 
-from unique_log import common_log
 import im_handler
 import session_manager
 import qiniu_token
@@ -17,13 +17,13 @@ define("port", default=9999, help="port given", type=int)
 define("debug", default=True, help = "in debug mode")
 define("secret")
 
-def test():
-    print('hello world')
+
 
 def main():
-    common_log.info('drop im module start...')
-    tornado.log.app_log.info('tornado self')
     parse_command_line()
+    gen_log.setLevel(logging.INFO)
+    gen_log.info('DROP-IM start ...')
+
     settings = dict(
         debug = options.debug
     )

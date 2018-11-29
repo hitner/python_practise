@@ -2,7 +2,7 @@ import secrets
 import threading
 import tornado.locks
 from tornado.ioloop import IOLoop
-
+from tornado.log import gen_log
 
 session_pool = {}
 
@@ -26,7 +26,6 @@ class MessageBuffer:
         if len(self.cache) > self.cache_size:
             self.cache = self.cache[int(self.cache_size / 2):]
 
-        print('notify all')
         self.cond.notify_all()
 
 
@@ -48,7 +47,6 @@ class Session:
 
     def get_msgs(self, seq, is_slave=0):
         now_time = IOLoop.current().time()
-        print(now_time)
         if not is_slave:
             self.master_last_req_time = now_time
             return self.slave_send_msgs_buffer.get_message_since(seq)
@@ -112,15 +110,15 @@ def session_from(token):
 
 
 def period_check():
-    print('now checking')
     will_delete = []
     for key, session in session_pool.items():
         if not session.is_valued():
             will_delete.append(key)
 
     for key in will_delete:
-        print('remote session:' + key)
+        gen_log.info('remove session:' + key)
         del session_pool[key]
+    gen_log.info('remain session count: %d'% len(session_pool))
 
 
 def start_period_check():
