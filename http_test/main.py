@@ -19,19 +19,19 @@ define("debug", default=True, help = "in debug mode")
 
 
 def main():
-    sys.argv.append('--log_file_prefix=./test.log')
-    sys.argv.append('--log_file_num_backups=4')
-    sys.argv.append('--log_file_max_size=16777216') #16M
+    #sys.argv.append('--log_file_prefix=./test.log')
+    #sys.argv.append('--log_file_num_backups=4')
+    #sys.argv.append('--log_file_max_size=16777216') #16M
     parse_command_line()
     gen_log.setLevel(logging.INFO)
-    gen_log.info('http_test start ...')
+    gen_log.info('http_test start ...,listen on port:%d'%options.port)
 
     settings = dict(
         debug = options.debug
     )
 
     app = tornado.web.Application([
-        (r"/testsets", http_test_handler.TestSetsHandler),
+        (r"/testsets/", http_test_handler.TestSetsHandler),
         (r"/testsets/([0-9]+)", http_test_handler.SetHandler),
         (r"/testsets/(.+)/interface/([0-9]*)", http_test_handler.SetInterfaceHandler),
     ], **settings,
