@@ -1,5 +1,12 @@
 # 斗地主
 
+## 消息推送
+使用通用消息推送模型，一个通道称为一个channel。
+
+channel内部可以使用长轮询、websocket甚至udp。
+channel有一个唯一标识符，并且全部时公开信息，不要求校验。
+channel的管理，主要是开通/销毁/和自销毁：对外特性，是获取推送的方式。
+
 ## 状态机存储
 
 - 房间管理器
@@ -106,8 +113,10 @@ getmycards,        room/1/player/1      GET
 randomjoinroom,    room/0/player        POST 返回roomId 和 playerId
 leaveroom,         room/1/player/1      DELETE
 pollchanges,       room/1/messages      GET (long poll)
-askformaster,      room/1/master-bid    POST
-restartgame,       room/1/ready         POST
+askformaster,      room/1/master-bid    POST <br/>
+restartgame,       room/1/ready         POST <br/>
+
+
 
 
         一个room里面有下面
