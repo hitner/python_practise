@@ -7,7 +7,7 @@ from tornado.log import gen_log, app_log
 import logging
 sys.path.append(os.path.join(os.pardir, 'server_common'))
 
-import im_handler
+import channel_handler
 import session_manager
 import qiniu_token
 
@@ -22,20 +22,17 @@ define("secret")
 def main():
     parse_command_line()
     gen_log.setLevel(logging.INFO)
-    gen_log.info('DROP-IM start ...')
+    gen_log.info('DROP-IM start ...,listen on port:%d' % options.port)
 
     settings = dict(
         debug = options.debug
     )
     qiniu_token.qiniu_secret = options.secret
     app = tornado.web.Application([
-        (r"/dropim/getConnectionAttribute", im_handler.MasterCreateHandler),
-        (r"/dropim/webSend", im_handler.MasterSendHandler),
-        (r"/dropim/syncWebMessages", im_handler.MasterSyncMessageHandler),
-        (r"/dropim/connect", im_handler.SlaveConnectHandler),
-        (r"/dropim/syncClientMessages",im_handler.SlaveSyncMessageHandler),
-        (r"/dropim/clientSend",im_handler.SlaveSendHandler),
-        (r"/dropim/getQiniuToken",im_handler.QiniuTokenHandler),
+        (r"/channel/(.+)/master_msg", channel_handler.MasterMsgHandler),
+        (r"/channel/(.+)/slave_msg", channel_handler.SlaveMsgHandler),
+        (r"/channel/(.*)", channel_handler.SessionHandler),
+        (r"/dropim/getQiniuToken",channel_handler.QiniuTokenHandler),
     ], **settings,
     )
 
