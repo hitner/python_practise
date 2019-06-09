@@ -11,9 +11,11 @@ class CardDescription:
 
 """
 牌型 一个人最多54-3 = 51  51/3=17 最多20张
+这是斗地主的关键，即对牌型进行数字化分类，来判断是否可以出牌，和是否可以接牌
 炸弹统一为 4 2 8 这些小于100的
 101， 单排
 105 - 112 顺子最多为 3-A 
+
 """
 patterns_single = [101]
 patterns_single_straight = list(range(105, 113))
