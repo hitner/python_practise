@@ -113,13 +113,13 @@ channel的管理，主要是开通/销毁/和自销毁：对外特性，是获�
 login              auth/login                POST 登录 uid+token
                    auth/logout               POST 登出
 
-dealcard,          room/1/playingTrack  POST
-getmycards,        room/1/player/1      GET
-randomjoinroom,    room/0/player        POST 返回roomId 和 playerId
-leaveroom,         room/1/player/1      DELETE
-pollchanges,       room/1/messages      GET (long poll)
-askformaster,      room/1/master-bid    POST <br/>
-restartgame,       room/1/ready         POST <br/>
+* dealcard,          room/1/playingTrack  POST
+* getmycards,        room/1/player/1      GET
+* randomjoinroom,    room/0/player        POST 返回roomId 和 playerId
+* leaveroom,         room/1/player/1      DELETE
+* pollchanges,       room/1/messages      GET (long poll)
+* askformaster,      room/1/master-bid    POST 
+* restartgame,       room/1/ready         POST 
 
 
 
