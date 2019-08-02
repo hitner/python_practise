@@ -14,6 +14,7 @@ from tornado.options import define, options, parse_command_line
 
 define("port", default=8800, help="port given", type=int)
 define("debug", default=True, help = "in debug mode")
+define("store_path", default='.', help="defualt location to store json file", type=str)
 
 
 
@@ -26,6 +27,7 @@ def main():
     gen_log.setLevel(logging.INFO)
     gen_log.info('http_test start ...,listen on port:%d'%options.port)
 
+    set_manager.location = options.store_path
     settings = dict(
         debug = options.debug
     )

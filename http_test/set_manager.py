@@ -7,7 +7,8 @@ import tornado.locks
 from tornado.ioloop import IOLoop
 from tornado.log import gen_log
 
-location = '/Users/lizhi/Documents/server_root/httptest'
+location = '.'
+
 
 class Status:
     last_index = 0
@@ -18,7 +19,7 @@ _status = Status()
 
 
 def file_name(index, name):
-    return "%s/%d_%s.json"%(location, index, name)
+    return "%s/%d_%s.json" % (location, index, name)
 
 
 def init():
@@ -32,7 +33,7 @@ def init():
                 stat_result = entry.stat()
                 index = int(m.group(1)[0:-1])
                 _status.index_file_map[index] = {
-                    'index':index,
+                    'index': index,
                     'name': m.group(2),
                     'size': stat_result.st_size,
                     'mtime': stat_result.st_mtime
@@ -50,20 +51,19 @@ def get_set_list():
     return result
 
 
-
 def add_set(content):
     name = content.get('name')
     if name:
-        _status.last_index+=1
+        _status.last_index += 1
         filename = file_name(_status.last_index, name)
         fp = open(filename, 'w')
-        string = json.dumps(content,indent=4, ensure_ascii=False)
+        string = json.dumps(content, indent=4, ensure_ascii=False)
         fp.write(string)
         fp.close()
 
         _status.index_file_map[_status.last_index] = {
-            'index':_status.last_index,
-            'name':name,
+            'index': _status.last_index,
+            'name': name,
             'size': len(string),
             'mtime': time.time()
         }
@@ -89,10 +89,10 @@ def delete_set(set_index):
         return True
 
 
-def patch_set(set_index,content):
+def patch_set(set_index, content):
     fs = _status.index_file_map.get(set_index)
     if fs:
-        with open(file_name(set_index,fs['name']), "r+") as fp:
+        with open(file_name(set_index, fs['name']), "r+") as fp:
             try:
                 data = fp.read()
                 origin = json.loads(data)
@@ -102,7 +102,7 @@ def patch_set(set_index,content):
                 if new_name and new_name != fs['name']:
                     with open(file_name(set_index, new_name), "w") as newfp:
                         newfp.write(final_string)
-                    os.remove(file_name(set_index,fs['name']))
+                    os.remove(file_name(set_index, fs['name']))
                     fs['name'] = new_name
                 else:
                     fp.seek(0)
@@ -118,7 +118,7 @@ def patch_set(set_index,content):
 def post_interface(set_index, content):
     fs = _status.index_file_map.get(set_index)
     if fs:
-        with open(file_name(set_index,fs['name']), "r+") as fp:
+        with open(file_name(set_index, fs['name']), "r+") as fp:
             try:
                 data = fp.read()
                 origin = json.loads(data)
@@ -139,7 +139,7 @@ def post_interface(set_index, content):
 def put_or_delete_interface(set_index, interface_index, content, delete_flag=0):
     fs = _status.index_file_map.get(set_index)
     if fs:
-        with open(file_name(set_index,fs['name']), "r+") as fp:
+        with open(file_name(set_index, fs['name']), "r+") as fp:
             try:
                 data = fp.read()
                 origin = json.loads(data)
