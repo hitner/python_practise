@@ -61,11 +61,10 @@ class Channel:
         else:
             self.auto_remove = 1
 
-        if self.auto_remove:
-            if 'silenceTick' in json_parameter:
-                self.destroy_timeout = json_parameter['silenceTick']
-            else:
-                self.destroy_timeout = DESTROY_TIMEOUT
+        if 'removeTimeout' in json_parameter:
+            self.destroy_timeout = json_parameter['removeTimeout']
+        else:
+            self.destroy_timeout = DESTROY_TIMEOUT
 
         self.message_buffer = MessageBuffer(self.cache_size)
 
@@ -76,7 +75,7 @@ class Channel:
                 'cacheSize': self.cache_size,
                 'pollTimeout': self.poll_timeout,
                 'autoRemove': self.auto_remove,
-                'silenceTick': self.destroy_timeout}
+                'removeTimeout': self.destroy_timeout}
 
     def get_messages(self, seq):
         now_time = IOLoop.current().time()

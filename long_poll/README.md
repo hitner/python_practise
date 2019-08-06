@@ -7,7 +7,7 @@
     ```buildoutcfg
         cacheSize = 10, // cache的消息数
         autoRemove = 1 // 是否自动移除
-        silenceTick = 120, //自动移除的超时时间
+        removeTimeout = 120, //自动移除的超时时间
         pollTimeout = 60, //poll的超时时间
     ```
     返回数据格式
