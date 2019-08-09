@@ -20,9 +20,10 @@ def create_logger(name, filename):
 
 
 LOG_DIR = '/var/log/zhixing'
+LOG_NAME = 'common'
 
 if not os.path.exists(LOG_DIR):
     os.mkdir(LOG_DIR)
     print('mkdir %s success'%(LOG_DIR))
 
-common_log = create_logger('common', os.path.join(LOG_DIR, 'common.log'))
+common_log = create_logger('common', os.path.join(LOG_DIR, f'${LOG_NAME}.log'))
