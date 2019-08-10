@@ -104,14 +104,14 @@ class CoreDoudizhu:
         if p_index == self._get_current_turn():
             if cards:
                 if card.bin_cards_has_subcards(self.playerHand[p_index], cards):
-                    ret = doudizhu_match.check_valuable_play(cards, self.__pre_cd())
+                    ret = doudizhu_match.check_valuable_play(cards, self._previous_cd())
                     if ret:
                         card.bin_cards_remove_some(self.playerHand[p_index], cards)
                         self._deadwood += cards
                         self.__add_playing_track(p_index, cards, ret)
                         return self.playingTrack[-1].copy()
             else:
-                if self.__pre_cd():  # 起始出牌时不出是不允许的！即只有在之前有效时才能"不出"
+                if self._previous_cd():  # 起始出牌时不出是不允许的！即只有在之前有效时才能"不出"
                     self.__add_playing_track(p_index, cards, doudizhu_match.CardDescription())
                     return self.playingTrack[-1].copy()
 
@@ -125,7 +125,7 @@ class CoreDoudizhu:
         else:
             return self.landlord
 
-    def __pre_cd(self):
+    def _previous_cd(self):
         if self.playingTrack:
             lastValid = self.playingTrack[-1]
             if len(self.playingTrack) > 1 and not lastValid['pattern'] :
@@ -138,9 +138,13 @@ class CoreDoudizhu:
             return None
 
     def __add_playing_track(self,  player:int ,cards, cd: doudizhu_match.CardDescription):
+        if cards:
+            cards_hex = cards.hex()
+        else:
+            cards_hex = ''
         self.playingTrack.append({
             'player':player,
-            'cards': cards.hex(),
+            'cards': cards_hex,
             'pattern': cd.pattern,
             'weight': cd.weight})
 
