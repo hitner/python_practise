@@ -30,10 +30,10 @@ A  14   1110
 
 2个ASCII字符来表示
 
-d 方块
-c 梅花
-h 红桃
-s 黑桃
+d 方块 diamond
+c 梅花 club
+h 红桃 heart
+s 黑桃 splade
 
 s2  ... s0 sJ sQ sK sA
 
@@ -44,6 +44,9 @@ s2  ... s0 sJ sQ sK sA
 
 前端表示法
 
+## 传输编码
+有两种，base16 或者 base64，为了简单起见，还是之间base16 节约多少?
+base64可以节省3分之一的字节？平时出牌都很简单，所以还是用base16吧
 
 
 

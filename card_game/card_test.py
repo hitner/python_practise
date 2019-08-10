@@ -23,6 +23,9 @@ print(f'back from base64 {card.bin_card_to_terminal_output(back_from_64)}')
 
 print(card.bin_card_to_terminal_output(card.one_deck))
 
+print(f'base16 one deck:{card.one_deck.hex()}')
+print(f'base64 one deck:{card.bin_cards_to_base64(card.one_deck)}')
+
 orgin_cards = list(card.one_deck)
 card.fisher_yates_shuffle(orgin_cards)
 print(card.bin_card_to_terminal_output(orgin_cards))

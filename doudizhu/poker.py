@@ -142,7 +142,7 @@ def visual_from_color_min3(cards: bytes):
 
 
 def remove_min3_color(cards):
-    """去掉min3 牌表示法的花色"""
+    """去掉min3 牌表示法的花色，还要进行从小到大排序"""
     ret = bytearray()
     for c in cards:
         ret.append(c & 0x1F)
@@ -151,10 +151,11 @@ def remove_min3_color(cards):
 
 class SplitMachine:
     def __init__(self):
-        self.state = 0
+        self.state = 0 #1表示，当前有值还可以继续处理 （其实除了一开始是0后面一直是1）
         self.cards = []
 
     def process(self,c):
+        """返回一个tuple（长度，字符）"""
         if self.state:
             if self.cards[0] == c:
                 self.cards.append(c)
