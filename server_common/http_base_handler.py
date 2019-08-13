@@ -7,7 +7,7 @@ class BaseHandler(RequestHandler):
     def get_current_user(self):
         session: str = self.get_secure_cookie(self.COOKIE_NAME)
         if session:
-            sep = session.split('-', 1)
+            sep = session.split(':', 1)
             return int(sep[0])
 
     def options(self, *args, **kwargs):
