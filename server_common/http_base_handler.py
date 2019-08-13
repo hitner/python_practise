@@ -6,10 +6,12 @@ class BaseHandler(RequestHandler):
 
     def get_current_user(self) -> int:
         ses = self.get_secure_cookie(self.COOKIE_NAME)
-        session = ses.decode()
-        if session:
-            sep = session.split(':', 1)
-            return int(sep[0])
+        if ses:
+            session = ses.decode()
+            if session:
+                sep = session.split(':', 1)
+                if sep:
+                    return int(sep[0])
 
     def options(self, *args, **kwargs):
         if __debug__:
