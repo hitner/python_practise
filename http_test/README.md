@@ -1,6 +1,10 @@
 # http_test 后端服务接口
 
+服务器端口： 8800
+文件存储路径：/opt/data/http_test/
+
 路径前缀 /testsets/
+
 
 # 接口
 ## /testsets/ 
