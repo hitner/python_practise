@@ -59,7 +59,7 @@ GAME/player/79348 GET 其它人的游戏数据
 ## 房间内操作
 自己的uid从自己的cookie中拿
 ### 属于玩牌的操作
--  GAME/rooms/ROOM_ID/enjoy?action=ACTION POST
+-  GAME/rooms/ROOM_ID/act?action=ACTION POST
     * ACTION 的值有
     status 从我的视角出发的牌全局描述
     tracks 前面的出牌记录
@@ -71,4 +71,5 @@ GAME/player/79348 GET 其它人的游戏数据
 
 ### 其它房间内操作
 - 房间玩家： GAME/rooms/ROOM_ID/players DELETE 离开房间 POST 加入房间 GET获得玩家信息
-- 托管:     GAME/rooms/ROOM_ID/sleep POST 托管 DELETE 取消托管 GET 获取托管状态
+- 托管:     GAME/rooms/ROOM_ID/afk POST 托管 DELETE 取消托管 GET 获取托管状态
+- 准备  GAME/rooms/ROOM_ID/ready
