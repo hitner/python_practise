@@ -1,4 +1,3 @@
-import asyncio
 import tornado.ioloop
 import tornado.web
 import sys

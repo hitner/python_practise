@@ -1,30 +1,7 @@
 # 服务器分类
 
-## 全局推送服务器
-global_push 端口 8803
-websocket 推送服务，在线列表变化、好友邀请等从这里来
+* 候机室服务器 doudizhu_waiting_room 
 
-## 全局常规服务器（flask）
-online 端口 8804
-拉取消息、获得好友列表
-
-## 候机室服务器
-doudizhu_waiting_room 端口 8810
-
-在这里完成组队等信息。还能够去邀请好友。在这里开始匹配的话就去匹配服务器请求匹配，匹配成功后匹配服务器去核心游戏服务器去创建房间。
-
-* doudizhu/waiting_rooms/UID
-    - POST 加入房间（自己加入自己的房间、接受邀请、跟踪好友房间都是此接口）
-    - DELETE 离开房间 主人离开后，房间自动销毁
-
-* doudizhu/waiting_rooms/UID/player/[uids]
-    - POST 发送邀请
-    - DELETE 踢出某人
-
-* doudizhu/waiting_rooms/UID/start
-    - POST 开始匹配 （默认自动准备，
-
-单独的房间long_poll
 ## 匹配服务器
 doudizhu_match 端口 8811
 

@@ -56,6 +56,9 @@ class BaseHandler(RequestHandler):
 
         self.write({'rcode': 0, 'data': data})
 
+    def write_need_login(self):
+        self.write_code_layer_error(401, "need login")
+
     def write_user_layer_error(self, rcode, describe):
         self.write({'rcode': rcode, 'describe': describe})
 
