@@ -1,10 +1,12 @@
 from tornado.web import RequestHandler, MissingArgumentError
-
+import sys
 
 class BaseHandler(RequestHandler):
     COOKIE_NAME = 'liuzhicheng'
 
     def get_current_user(self) -> int:
+        if sys.platform == 'darwin':
+            return 1
         ses = self.get_secure_cookie(self.COOKIE_NAME)
         if ses:
             session = ses.decode()

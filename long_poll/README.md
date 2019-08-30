@@ -1,5 +1,5 @@
 ## long poll 服务
-前缀
+端口8801
 
 * longpoll/
     - POST :创建一个服务channel

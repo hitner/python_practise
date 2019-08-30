@@ -17,4 +17,5 @@ def config_log(server_name):
     sys.argv.append('--logging=info')
 
 
+COOKIE_SECRET = "0fa2ds88fce9dcb225c0fpda8bd7b3kbcd46b2"
 

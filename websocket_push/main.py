@@ -8,8 +8,8 @@ import launch_config
 from tornado.options import define, options, parse_command_line
 import waiting_room_handler
 
-SERVER_NAME = 'doudizhu_waiting_room'
-define("port", default=8810, help="port given", type=int)
+SERVER_NAME = 'WEBSOCKET_PUSH'
+define("port", default=8803, help="port given", type=int)
 define("debug", default=False, help = "in debug mode")
 
 def main():
