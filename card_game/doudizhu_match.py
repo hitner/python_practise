@@ -108,7 +108,7 @@ def _single_or_straight_without_2(cards):
 
 
 def _check_grand_bomb(cards):
-    if cards[0] == card.card_black_joker and cards[1] == card.card_red_joker:
+    if cards[0] == card.BLACK_JOKER and cards[1] == card.RED_JOKER:
         return CardDescription(2, cards[0])
 
 

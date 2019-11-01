@@ -29,17 +29,22 @@ AceBig_joker = [16, 32]
 
 card_2 = 2
 card_ace = 14
-card_black_joker = 16
-card_red_joker = 32
+BLACK_JOKER = 16
+RED_JOKER = 32
 one_deck = bytes(AceBig_diamond + AceBig_club + AceBig_heart + AceBig_spade + AceBig_joker)
 two_deck = bytes(one_deck + one_deck)
 
 class Color(enum.IntEnum):
-    none = -1
-    diamond = 0
-    club = 1
-    heart = 2
-    spade = 3
+    NON_COLOR = -1
+    DIAMOND = 0
+    CLUB = 1
+    HEART = 2
+    SPADE = 3
+
+
+def get_color(card) -> Color:
+    return card & 0b11000000
+
 
 def _one_bin_card_from(terminal_input):
     color_value = _color_input_to_bin_map[terminal_input[0]]
