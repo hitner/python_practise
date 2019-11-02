@@ -21,4 +21,7 @@
 }
 ```
 
-*/websocket/manager/FOO_BAR  DELETE 删除一个websocket
+* /websocket/manager/FOO_BAR   一个接口的内部操作
+    * DELETE 删除一个websocket
+    * POST 广播一个消息
+    * GET 获取元信息

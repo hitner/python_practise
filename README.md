@@ -22,3 +22,8 @@ online 端口 8804
 
 ## doudizhu
 - 斗地主游戏状态机
+
+## 全局约束
+
+* 接口函数返回字典表示成功，返回其它（None、str）表示失败！这样的接口应该有一个统一的前缀
+wi_ (表示web interface, 以便于以后替换tornado)

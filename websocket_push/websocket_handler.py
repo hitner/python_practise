@@ -1,43 +1,71 @@
 from tornado.web import RequestHandler
+import tornado
 import http_base_handler
 import json
+import websocket_channel_pool
 
 
-class WebsocketAddHandler(http_base_handler.BaseHandler):
+class PostHandler(http_base_handler.BaseHandler):
     ALLOWED_METHODS = ['POST']
 
     def post(self, *args, **kwargs):
-        try:
-            content = json.loads(self.request.body)
-            uid = content['uid']
-            password = content['password']
-            if password == '123456':
-                token = 'THESE IS A FAKE TOKEN'
-                self.set_secure_cookie(self.COOKIE_NAME, f'{uid}:{token}')
-                self.write_success_dict({})
-            else:
-                self.write_user_layer_error(1,"password is not right")
-        except json.JSONDecodeError:
-            self.write_bad_request('not a json string')
-        except KeyError:
-            self.write_error_parameter(['uid','password'])
+        session = websocket_channel_pool.wi_create_channel()
+        if isinstance(session, dict):
+            self.write_success_dict(session)
+        else:
+            self.write_user_layer_error(1,session)
 
-class OneWebsocketHandler(http_base_handler.BaseHandler):
-    ALLOWED_METHODS = ['POST']
+
+
+
+class OneInstanceHandler(http_base_handler.BaseHandler):
+    ALLOWED_METHODS = ['POST','DELETE']
 
     def post(self, *args, **kwargs):
         try:
-            content = json.loads(self.request.body)
-            uid = content['uid']
-            password = content['password']
-            if password == '123456':
-                token = 'THESE IS A FAKE TOKEN'
-                self.set_secure_cookie(self.COOKIE_NAME, f'{uid}:{token}')
-                self.write_success_dict({})
+            message = json.loads(self.request.body)
+            websocket_name = args[0]
+            if message:
+                result_string = websocket_channel_pool.wi_send_message_to_channel(websocket_name, message)
+                if isinstance(result_string, dict):
+                    self.write_success_dict({})
+                else:
+                    self.write_user_layer_error(1, result_string)
             else:
-                self.write_user_layer_error(1,"password is not right")
+               self.write_user_layer_error(1, 'should send something') 
         except json.JSONDecodeError:
             self.write_bad_request('not a json string')
-        except KeyError:
-            self.write_error_parameter(['uid','password'])
 
+
+    def delete(self, *args, **kwargs):
+        try:
+            websocket_name = args[0]
+            result_string = websocket_channel_pool.wi_delete_channel(websocket_name)
+            if isinstance(result_string, dict):
+                self.write_success_dict({})
+            else:
+                self.write_user_layer_error(1, result_string)
+        except json.JSONDecodeError:
+            self.write_bad_request('unknown error') 
+
+
+class JoinHandler(tornado.websocket.WebSocketHandler):
+    #def get(self, *args, **kwargs):
+
+
+    def open(self, *args, **kwargs):
+        channel_name = args[0]
+        if websocket_channel_pool.i_has_channel(channel_name):
+            websocket_channel_pool.i_add_client(channel_name, self)
+        else:
+            self.close(reason='no this channel')
+
+    def on_close(self):
+        channel_name = self.open_args[0]
+        if websocket_channel_pool.i_has_channel(channel_name):
+            websocket_channel_pool.i_remove_client(channel_name, self)
+
+
+    def on_message(self, message):
+        #logging.info("got message %r", message)
+        print(f'warning{message}')

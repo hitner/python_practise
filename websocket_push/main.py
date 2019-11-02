@@ -24,8 +24,9 @@ def main():
         cookie_secret = launch_config.COOKIE_SECRET
     )
     app = tornado.web.Application([
-        (r"/websocket/manager/(.*)", websocket_handler.OneWebsocketHandler),
-        (r"/websocket/manager", websocket_handler.WebsocketAddHandler),
+        (r"/websocket/manager/(.*)", websocket_handler.OneInstanceHandler),
+        (r"/websocket/manager", websocket_handler.PostHandler),
+        (r"/websocket/join/(.*)", websocket_handler.JoinHandler),
     ], **settings,
     )
 
