@@ -4,7 +4,7 @@
 
 ## 客户端接口
 
-* ws://origin:8803/websocket/listen/FOO_BAR
+* ws://origin:8803/websocket/join/FOO_BAR
 
     监听这个websocket，如果不存在，会在创建成功后失败，或者说get 的时候失败
     

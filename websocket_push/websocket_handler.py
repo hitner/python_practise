@@ -1,8 +1,9 @@
 from tornado.web import RequestHandler
-import tornado
+import tornado.websocket
 import http_base_handler
 import json
 import websocket_channel_pool
+from tornado.log import gen_log
 
 
 class PostHandler(http_base_handler.BaseHandler):
@@ -50,8 +51,16 @@ class OneInstanceHandler(http_base_handler.BaseHandler):
 
 
 class JoinHandler(tornado.websocket.WebSocketHandler):
-    #def get(self, *args, **kwargs):
+    def get(self, *args, **kwargs):
+        channel_name = args[0]
+        if websocket_channel_pool.i_has_channel(channel_name): 
+            super(JoinHandler,self).get(*args, **kwargs)
+        else:
+            self.set_status(400)
+            self.finish("no such websocket channel")
 
+    def check_origin(self, origin):
+        return True
 
     def open(self, *args, **kwargs):
         channel_name = args[0]
@@ -59,6 +68,7 @@ class JoinHandler(tornado.websocket.WebSocketHandler):
             websocket_channel_pool.i_add_client(channel_name, self)
         else:
             self.close(reason='no this channel')
+            gen_log.warning('open an unexisted channel')
 
     def on_close(self):
         channel_name = self.open_args[0]

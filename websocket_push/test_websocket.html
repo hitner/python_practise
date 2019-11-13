@@ -1,12 +1,45 @@
 <!DOCTYPE html>
 <html>
 
-    <head>good</head>
+    <head>
+        <style>
+            .input {
+                width:500px;
+                height:30px;
+                font-size: 16px;
+            }
+        </style>
+    </head>
     <body>
-        <input name="websocket_name"></input>
+        <input id="websocket_url" type="text" value="ws://localhost:8803/websocket/join/"
+                class="input">
+        </input>
+        <br/>
         <button onclick="addWebsocket()">增加一个websocket</button>
         <script>
             function addWebsocket(){
+                var input = document.getElementById("websocket_url");
+                console.log(input.value)
+                var aWebSocket = new WebSocket(input.value);
+                aWebSocket.onopen = (event)=>{
+                    var identity = event.target.url.slice(-9);
+                    console.log(`websokcet ${identity} openned`)
+                };
+
+                aWebSocket.onclose = (event)=>{
+                    var identity = event.target.url.slice(-9);;
+                    console.log(`websokcet ${identity} closed`)
+                };
+
+                aWebSocket.onmessage = (event) => {
+                    var identity = event.target.url.slice(-9);
+                    console.log(`websokcet ${identity} reveive message${event.data}`)
+                };
+
+                aWebSocket.onerror = (event) => {
+                    var identity = event.target.url.slice(-9);
+                    console.log(`websokcet ${identity} error ${event}`)
+                }
 
             }
         </script>

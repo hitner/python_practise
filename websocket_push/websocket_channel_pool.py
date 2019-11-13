@@ -49,7 +49,8 @@ def wi_send_message_to_channel(channel_name, json_message):
     if channel_name not in channel_pool:
         return ERROR_CHANNEL_NOT_FOUND
     session = channel_pool[channel_name]
-    return session.broadcast_message(channel_name, json_message)
+    session.broadcast_message(json_message)
+    return {}
 
 
 def wi_delete_channel(channel_name):
