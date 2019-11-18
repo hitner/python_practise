@@ -5,7 +5,6 @@ import json
 import websocket_channel_pool
 from tornado.log import gen_log
 
-
 class PostHandler(http_base_handler.BaseHandler):
     ALLOWED_METHODS = ['POST']
 
@@ -51,11 +50,12 @@ class OneInstanceHandler(http_base_handler.BaseHandler):
 
 
 class JoinHandler(tornado.websocket.WebSocketHandler):
-    def get(self, *args, **kwargs):
+    async def get(self, *args, **kwargs):
         channel_name = args[0]
         if websocket_channel_pool.i_has_channel(channel_name): 
-            super(JoinHandler,self).get(*args, **kwargs)
+            await super(JoinHandler,self).get(*args, **kwargs)
         else:
+            gen_log.warning('try to connect unexisted channel')
             self.set_status(400)
             self.finish("no such websocket channel")
 
