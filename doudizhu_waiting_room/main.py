@@ -24,8 +24,9 @@ def main():
         cookie_secret = launch_config.COOKIE_SECRET
     )
     app = tornado.web.Application([
-        (r"/doudizhu/waiting_rooms/([0-9]+)/players/([0-9]*)", waiting_room_handler.RoomPlayersHandler),
-        (r"/doudizhu/waiting_rooms/myroom", waiting_room_handler.MyRoomHandler),
+        (r"/doudizhu/waiting_rooms/(.+)/players/([0-9]*)", waiting_room_handler.RoomPlayersHandler),
+        (r"/doudizhu/waiting_rooms", waiting_room_handler.CreateRoomHandler),
+        (r"/doudizhu/waiting_rooms/(.+)", waiting_room_handler.RoomInfoHandler),
     ], **settings,
     )
 

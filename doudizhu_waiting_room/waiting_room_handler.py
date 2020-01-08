@@ -16,11 +16,11 @@ class RoomPlayersHandler(http_base_handler.BaseHandler):
             return
 
         room_id = args[0]
-        join_ret = waiting_room_server.join_room(room_id, uid)
-        if join_ret:
+        join_ret = waiting_room_server.wi_join_room(room_id, uid)
+        if isinstance(join_ret, dict):
             self.write_success_dict(join_ret)
         else:
-            self.write_user_layer_error(3, "cannot join this room")
+            self.write_user_layer_error(3, join_ret)
 
     def delete(self,*args,**kwargs):
         uid = self.current_user
@@ -31,15 +31,15 @@ class RoomPlayersHandler(http_base_handler.BaseHandler):
         room_id = args[0]
         if len(args) > 1:
             target_uid = args[1]
-        leave_ret = waiting_room_server.leave_room(room_id, uid, target_uid)
-        if leave_ret:
+        leave_ret = waiting_room_server.wi_leave_room(room_id, uid, target_uid)
+        if isinstance leave_ret:
             self.write_success_dict(leave_ret)
         else:
             self.write_user_layer_error(4, "cannot leave this room")
 
 
-class MyRoomHandler(http_base_handler.BaseHandler):
-    ALLOWED_METHODS = ['GET','POST','DELETE']
+class CreateRoomHandler(http_base_handler.BaseHandler):
+    ALLOWED_METHODS = ['POST']
 
     def post(self, *args, **kwargs):
         uid = self.current_user
