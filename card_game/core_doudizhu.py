@@ -34,13 +34,13 @@ class CoreDoudizhu:
         self.bottomCards = bytearray()
         self.landlord = self.LANDLORD_NONE
         self.playingTrack = []
-        if len (self._deadwood) != len(card.one_deck):
+        if len (self._deadwood) != len(card.ONE_DECK):
             self._deadwood = []
 
     def shuffle(self) -> bool:
         """洗牌，返回True 表示洗牌成功， False表示游戏正在进行中,无法洗牌"""
         if not self._deadwood:
-            self._deadwood = bytearray(card.one_deck)
+            self._deadwood = bytearray(card.ONE_DECK)
         # else:
         #     self._deadwood += self.playerHand[0]
         #     self._deadwood += self.playerHand[1]

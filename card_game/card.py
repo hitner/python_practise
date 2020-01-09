@@ -7,8 +7,28 @@ import enum
 bin_cards 全部为bytearray！！！
 """
 
+
+
+
+SUIT_SHIFT = 5
+WEIGHT_BITMASK = 0x1F
+
+NUMBER2 = 2
+ACE = 14
+# 15 16 为保留值
+BLACK_JOKER = 17
+RED_JOKER = 18
+
+DIAMOND = list(range(NUMBER2, ACE+1))
+CLUB =  [ (x | 0b0100000) for x in DIAMOND]
+HEART = [ (x | 0b1000000) for x in DIAMOND]
+SPADE = [ (x | 0b1100000) for x in DIAMOND]
+JOKERS = [BLACK_JOKER, RED_JOKER]
+ONE_DECK = bytes(DIAMOND + CLUB + HEART + SPADE + JOKERS)
+DOUBLE_DECK = bytes(ONE_DECK + ONE_DECK)
+
 _card_terminal_char = ['2','3','4','5','6','7','8','9','0','J','Q','K','A','V','W']
-_card_bin_char = list(range(2,15)) + [16, 32]
+_card_bin_char = DIAMOND + JOKERS
 
 _card_terminal_input_color = ['!','d','c','h','s']
 _card_bin_color = [0, 0, 1, 2, 3]
@@ -19,22 +39,7 @@ _color_input_to_bin_map = dict(zip(_card_terminal_input_color, _card_bin_color))
 _color_char_to_bin_map = dict(zip(_card_terminal_char, _card_bin_char))
 _char_bin_to_terminal_map = dict(zip(_card_bin_char, _card_terminal_char))
 
-
-AceBig_diamond = list(range(2, 15))
-AceBig_club =  [ (x | 0b01000000) for x in AceBig_diamond]
-AceBig_heart = [ (x | 0b10000000) for x in AceBig_diamond]
-AceBig_spade = [ (x | 0b11000000) for x in AceBig_diamond]
-AceBig_joker = [16, 32]
-
-
-card_2 = 2
-card_ace = 14
-BLACK_JOKER = 16
-RED_JOKER = 32
-one_deck = bytes(AceBig_diamond + AceBig_club + AceBig_heart + AceBig_spade + AceBig_joker)
-two_deck = bytes(one_deck + one_deck)
-
-class Color(enum.IntEnum):
+class Suit(enum.IntEnum):
     NON_COLOR = -1
     DIAMOND = 0
     CLUB = 1
@@ -42,14 +47,21 @@ class Color(enum.IntEnum):
     SPADE = 3
 
 
-def get_color(card) -> Color:
-    return card & 0b11000000
+def get_suit(card) -> Suit:
+    #注意大小王也是没有COLOR的概念，包含了
+    if card & 0b10010000:
+        return Suit.NON_COLOR
+    else:
+        return (card >> SUIT_SHIFT) & 0b011
+
+def get_weight(c) -> int:
+    return c & WEIGHT_BITMASK
 
 
 def _one_bin_card_from(terminal_input):
     color_value = _color_input_to_bin_map[terminal_input[0]]
     char_value = _color_char_to_bin_map[terminal_input[1]]
-    return (color_value << 6) + char_value
+    return (color_value << SUIT_SHIFT) + char_value
 
 
 def bin_card_from_terminal_string(terminal_inputs):
@@ -60,29 +72,41 @@ def bin_card_from_terminal_string(terminal_inputs):
         for i in range(0, len(terminal_inputs), 2):
             ret.append(_one_bin_card_from(terminal_inputs[i:i+2]))
         return ret
-    except Exception as e:
+    except Exception:
         return None
 
 
 def bin_card_to_terminal_output(bin_cards):
     ret = ''
     for i in range(0, len(bin_cards)):
-        if bin_cards[i] == 16:
+        if bin_cards[i] == BLACK_JOKER:
             ret = ret + '!V'
-        elif bin_cards[i] == 32:
+        elif bin_cards[i] == RED_JOKER:
             ret = ret + '!W'
         else:
-            ret = ret + _card_terminal_output_color[1+ (bin_cards[i]>>6)]
-            ret = ret + _char_bin_to_terminal_map[bin_cards[i]&0x0F]
-
+            ret = ret + _card_terminal_output_color[1+ (bin_cards[i] >> SUIT_SHIFT)]
+            ret = ret + _char_bin_to_terminal_map[bin_cards[i] & WEIGHT_BITMASK]
     return ret
 
+def bin_card_to_terminal_input(bin_cards):
+    """用于自动生成一些东西并且能够存储
+    """
+    ret = ''
+    for i in range(0, len(bin_cards)):
+        if bin_cards[i] == BLACK_JOKER:
+            ret = ret + '!V'
+        elif bin_cards[i] == RED_JOKER:
+            ret = ret + '!W'
+        else:
+            ret = ret + _card_terminal_input_color[1+ (bin_cards[i] >> SUIT_SHIFT)]
+            ret = ret + _char_bin_to_terminal_map[bin_cards[i] & WEIGHT_BITMASK]
+    return ret
 
 def bin_card_remove_color(bin_cards):
     """返回一个全新的bytearray"""
     ret = bytearray(bin_cards)
     for i in range(0, len(bin_cards)):
-        ret[i] = ret[i] & 0x3F
+        ret[i] = ret[i] & WEIGHT_BITMASK
     return ret
 
 
@@ -120,12 +144,12 @@ def bin_cards_has_subcards(cards, deal):
     try:
         for c in deal:
             backup.remove(c)
-    except ValueError as e:
+    except ValueError:
         return False
     return True
 
 
-def sort_by_doudizhu_rule(cards) -> list:
+def sort_by_doudizhu_rule(cards) -> bytearray:
     """
     :param cards: 输入是list或bytearray
     :return: 排过序之后的全新的bytearray
@@ -136,13 +160,13 @@ def sort_by_doudizhu_rule(cards) -> list:
 
 def _sort_doudizhu_compare_value(c):
     '''斗地主中使用的排序方法 主要2要比A大，所以要映射成15,且花色变为黑桃最大， 主要这里仅用于排序'''
-    if c == 16 or c == 32:
-        number_value = c << 6
+    if c in JOKERS:
+        number_value = c << 2 #左移6位？干什么 总是比其它花色要大; 将花色与weight换一下位置
     else:
-        if (c &0x0F) == card_2:
-            number_value = (c >> 6) + (15 << 2) #2 要变成15
+        if (c & WEIGHT_BITMASK) == NUMBER2:
+            number_value = (c >> SUIT_SHIFT) + (15 << 2) #2 要变成15
         else:
-            number_value = ((c & 0x0F) << 2) + (c>>6)
+            number_value = ((c & WEIGHT_BITMASK) << 2) + (c>>SUIT_SHIFT)
     return number_value
 
 

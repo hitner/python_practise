@@ -120,7 +120,7 @@ def _check_bomb(cards):
                 pre = cards[i]
             else:
                 return None
-        if pre <= card.card_ace:
+        if pre <= card.ACE:
             return CardDescription(len(cards), cards[0])
 
 
@@ -135,7 +135,7 @@ def _check_single_straight_(cards):
             pre = cards[i]
         else:
             return None
-    if pre <= card.card_ace:
+    if pre <= card.ACE:
         return CardDescription(100 + len(cards), cards[0])
 
 
@@ -152,7 +152,7 @@ def _check_pair_straight(cards):
                 pre = cards[i]
             else:
                 return None
-        if pre <= card.card_ace:
+        if pre <= card.ACE:
             return CardDescription(200 + len(cards), cards[0])
 
 
@@ -285,7 +285,7 @@ def _bin_cards_to_min3(cards):
     """
     nocolors = card.bin_card_remove_color(cards)
     for i in range(0, len(nocolors)):
-        if nocolors[i] == card.card_2:
+        if nocolors[i] == card.NUMBER2:
             nocolors[i] = MIN3_2
     return sorted(nocolors)
 

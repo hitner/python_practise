@@ -21,18 +21,18 @@ back_from_64 = card.bin_cards_from_base64(base64_show)
 print(f'back from base64 {card.bin_card_to_terminal_output(back_from_64)}')
 
 
-print(card.bin_card_to_terminal_output(card.one_deck))
+print(card.bin_card_to_terminal_output(card.ONE_DECK))
 
-print(f'base16 one deck:{card.one_deck.hex()}')
-print(f'base64 one deck:{card.bin_cards_to_base64(card.one_deck)}')
+print(f'base16 one deck:{card.ONE_DECK.hex()}')
+print(f'base64 one deck:{card.bin_cards_to_base64(card.ONE_DECK)}')
 
-orgin_cards = list(card.one_deck)
+orgin_cards = list(card.ONE_DECK)
 card.fisher_yates_shuffle(orgin_cards)
 print(card.bin_card_to_terminal_output(orgin_cards))
 
 
 ## some
-before_remove = list(card.one_deck)
+before_remove = list(card.ONE_DECK)
 is_remove = card.bin_cards_remove_some(before_remove, bin_cards)
 print(card.bin_card_to_terminal_output(before_remove))
 
