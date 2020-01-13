@@ -1,5 +1,5 @@
 import shengji_core_foundation
-from shengji_core_foundation import Pattern, first_play, follow_play
+from shengji_core_foundation import Pattern, first_play, follow_play, ActionResult
 import card
 import unittest
 
@@ -48,6 +48,8 @@ class ShengjiCoreFoundationTest(unittest.TestCase):
     bottoms = cs('d4sQh6h6cAc7c3dJ')
 
 
+
+
     def test_single_weight(self):
         ret = shengji_core_foundation._weight_of_single(cs('sQ')[0], self.trump_card)
         self.assertEqual(ret, 12)
@@ -82,12 +84,25 @@ class ShengjiCoreFoundationTest(unittest.TestCase):
         self.assertEqual(ret.pattern, Pattern.PAIR_STRAIGHT)
         self.assertEqual(ret.weight, 806) 
 
+    def test_check_bucket(self):
+        check_bucket_str = ['!W!Vc4h4sAsQs8s8s6s5s3hKh0h3cKcKcQc9c8c2dQd0d0d9d8d8d5',
+            'c4d4s0s9s3s2hKhQh9h5h3h2c7c6c3d7d7d6d5d3',
+            '!Vs4sJsJs7s7s6s2hAhQhJhJh8h7h5c6c5dKdQdJd9d6d2',
+            '!Ws4h4sAsKsKs0s9s5hAh0h9h8h7h2dAdAdKd3d2']
+        bucket_hands = []
+        for i in range(0,4):
+            bucket_hands.append(cs(check_bucket_str[i]))
+
+        def is_valid_bucket(cards):
+            cd = shengji_core_foundation._check_bucket(cards,bucket_hands,0,self.trump_card)
+            return cd.action = 
+
     def test_first_play(self):
         ret = first_play(cs("s8s8"), self.players, 0, self.trump_card)
         self.assertEqual(ret.pattern, Pattern.PAIR)
         self.assertEqual(ret.weight, 8) 
 
-        
+
 
 if __name__ == '__main__':
     unittest.main()
