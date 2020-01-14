@@ -65,7 +65,7 @@ def _get_shengji_suit_cards(suit : ShengjiSuit, cards, trump_card)->bytearray:
     for c in cards:
         if _shengji_suit(c, trump_card) == suit:
             ret.append(c)
-    return c
+    return ret
 
 def _shengji_suit(c, trump_card) -> ShengjiSuit:
     """根据出的牌判断是什么样的升级花色"""
@@ -81,7 +81,7 @@ class CardDescription:
     """
     def __init__(self):
         self.action = ActionResult.TEMPORARY
-        self.pattern = Pattern.NO_MEANING
+        self.pattern = Pattern.UNKNOWN
         self.weight = 0 #pattern 与weight配合来比较大小
         self.shengji_suit = ShengjiSuit.TRUMP #花色 主、黑桃、红桃、梅花、方块
         self.special_cards = None #甩牌失败的部分 或者全部cards，不一定会有，看特定情况
@@ -136,7 +136,7 @@ def first_play(cards, hands: list, my_index,  trump_card) -> CardDescription:
     cards_length = len(cards)
     if cards_length == 1:
         cd.pattern = Pattern.SINGLE
-        cd.weight = _weight_of_single(cards, trump_card)
+        cd.weight = _weight_of_single(cards[0], trump_card)
     elif cards_length == 2:
         if cards[0] == cards[1]:
             cd.pattern = Pattern.PAIR
@@ -144,8 +144,11 @@ def first_play(cards, hands: list, my_index,  trump_card) -> CardDescription:
     else:
         # 偶数4个及以上
         cd = _check_pair_straight(cards, trump_card)
+
     if not cd or cd.pattern == Pattern.UNKNOWN:
-        cd = _check_bucket(cards, hands, my_index, trump_card) 
+        cd = _check_bucket(cards, hands, my_index, trump_card)
+    else:
+        cd.action = ActionResult.FIRST_PLAY
     return cd
 
 
@@ -194,8 +197,12 @@ def _is_all_trump(cards, trump_card) -> bool:
 
 
 def _is_consistent(cards, trump_card) -> bool:
-    """全是主牌或者全是副牌
+    """全是主牌或者全是同一花色的副牌
     """
+    pre_suit = _shengji_suit(cards[0], trump_card)
+    for c in cards:
+        if pre_suit != _shengji_suit(c,trump_card):
+            return False
     return True
 
 
@@ -268,7 +275,7 @@ def _check_bucket(cards, hands, my_index, trump_card)-> CardDescription:
     #合并，只取最后面的连对和单牌的cd （即最小的那部分）
     tmp_alread_join = []
     final_split_cd = []
-    is_trump = _is_trump(cards[0], trump_card)
+    current_shengji_suit = _shengji_suit(cards[0], trump_card)
     
     def get_pair_cd(single_pair) -> CardDescription:
         long_cards = []
@@ -279,22 +286,22 @@ def _check_bucket(cards, hands, my_index, trump_card)-> CardDescription:
         cd = CardDescription()
         if len(single_pair) == 1:
             cd.pattern = Pattern.PAIR
-            cd.weight = _weight_of_single(single_pair[0])
+            cd.weight = _weight_of_single(single_pair[0],trump_card)
             cd.special_cards = long_cards
         else:
             cd.pattern = Pattern.PAIR_STRAIGHT
-            cd.weight = 200*len(single_pair) + _weight_of_single(single_pair[0]) 
+            cd.weight = 200*len(single_pair) + _weight_of_single(single_pair[0], trump_card) 
             cd.special_cards = long_cards
         
-        cd.is_trump = is_trump
+        cd.shengji_suit = current_shengji_suit
         return cd
         
 
     if len(single_cards):
         cd = CardDescription()
         cd.pattern = Pattern.SINGLE
-        cd.weight = _weight_of_single(single_cards[-1])
-        cd.is_trump = is_trump 
+        cd.weight = _weight_of_single(single_cards[-1], trump_card)
+        cd.shengji_suit = current_shengji_suit 
         cd.special_cards = [single_cards[-1]]
         final_split_cd.append(cd)
     
@@ -304,15 +311,14 @@ def _check_bucket(cards, hands, my_index, trump_card)-> CardDescription:
             final_split_cd.append(get_pair_cd(ps))
     
     #得到当前升级花色
-    current_play_suit = _shengji_suit(cards[0], trump_card)
 
-    #分别判断最小的那部分是否在后续牌中是最大的
-    def has_bigger_part(cd_list, hand_cards, tr)-> list:
+    #分别判断cd在其它玩家中不是最大的
+    def not_the_biggest_part(cd_list, hand_cards, tr)-> list:
         """返回一个排面最小的那个list
             :param list cd_list: 甩牌的描述
             :param bytearray hand_cards: 对应花色的手牌
             :param int tr: 叫主的牌 如果是无主，最高位为1
-            :return: cd_list中的部分元素
+            :return: cd_list中的部分元素，该部分元素不是最大的
         """
 
         def is_cd_the_biggest(cd, origin_cards, weight_cards, tr) -> bool:
@@ -321,44 +327,45 @@ def _check_bucket(cards, hands, my_index, trump_card)-> CardDescription:
                 :param list origin_cards: 其它玩家手里的原始牌
                 :param list weight_cards: 原始牌对应的权重牌
                 :param int tr: 关卡值和花色 
+                :return: 返回True表示该cd可以甩出去，即比最大的牌还大
             """
             if len(hand_cards) == 0 :
                 return True
             
             # 根据类型单个判断
             if cd.pattern == Pattern.SINGLE:
-                return cd.weight >= weight_cards[-1]
+                return cd.weight >= weight_cards[0]
             elif cd.pattern == Pattern.PAIR:
                 possible_cds = _get_valid_pair_follow(origin_cards, weight_cards)
                 if len(possible_cds):
-                    if cd.weight >= possible_cds[0].weight:
-                        return True
+                    if cd.weight < possible_cds[0].weight:
+                        return False
             elif cd.pattern == Pattern.PAIR_STRAIGHT:
                 possible_cds = _get_valid_pair_staight_follow(floor(cd.weight/100), origin_cards,tr)
                 if len(possible_cds):
-                    if cd.weight >= possible_cds[0].weight:
-                        return True
-            
-            return False
+                    if cd.weight < possible_cds[0].weight:
+                        return False
+            #默认找不到对应的类型，即是最大的 正确
+            return True
 
         weight_cards = _get_weight_cards(hand_cards, tr)
         ret = []
         for cd in cd_list:
-            if (is_cd_the_biggest(cd, hand_cards, weight_cards tr)):
+            if not is_cd_the_biggest(cd, hand_cards, weight_cards,tr):
                 ret.append(cd)
         return ret
 
     all_bigger = [] #元素为cd
     for i in range(0,3):
         current_index = (my_index+i+1)%4
-        target_origin_cards = _get_shengji_suit_cards(current_play_suit,hands[current_index],trump_card)
-        all_bigger += has_bigger_part(final_split_cd, target_origin_cards ,trump_card)
+        target_origin_cards = _get_shengji_suit_cards(current_shengji_suit,hands[current_index],trump_card)
+        all_bigger += not_the_biggest_part(final_split_cd, target_origin_cards ,trump_card)
 
     # 挑选出最右侧（牌面最小的牌）
     min_cd = None
     for cd_i in all_bigger:
         if min_cd:
-            if (min_cd.weight % 100) < (cd_i.weight %100):
+            if (cd_i.weight % 100) < (min_cd.weight %100):
                 min_cd = cd_i
         else:
             min_cd = cd_i
@@ -379,7 +386,7 @@ def _get_valid_pair_follow(origin_cards, weight_cards):
     ret = []
     #最多两个牌相等
     pre = None
-    for i range(0, len(origin_cards)):
+    for i in range(0, len(origin_cards)):
         if pre is None:
             pre = origin_cards[i]
         else:

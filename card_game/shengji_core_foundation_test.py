@@ -37,9 +37,9 @@ c4d4s0s9s3s2hKhQh9h5h3h2cAcQcJcJc0c7c6c3d7d7d6d5d3
 class ShengjiCoreFoundationTest(unittest.TestCase):
     """每个牌型检查的test"""
     trump_card = cs('s4')[0]
-    player_str = ['!W!Vc4h4sAsQs8s8s6s5s3hKh0h3cKc9c8c2dQd0d0d9d8d8d5',
+    player_str = ['!W!Vc4h4sAsQs8s8s6s5s3hKh0h3cKc9c8c2dQd0d0d9d9d8d8d5',
         'c4d4s0s9s3s2hKhQh9h5h3h2cAcQcJcJc0c7c6c3d7d7d6d5d3',
-        '!Vs4sJsJs7s7s6s2hAhQhJhJh8h7h5cQc0c6c5dKdQdJd9d6d2',
+        '!Vs4sJsJs7s7s6s2hAhQhJhJh8h7h5cQc0c6c5dKdQdJd6d2',
         '!Ws4h4sAsKsKs0s9s5hAh0h9h8h7h2cKc9c8c5c2dAdAdKd3d2']
     players = []
     for i in range(0,4):
@@ -85,23 +85,59 @@ class ShengjiCoreFoundationTest(unittest.TestCase):
         self.assertEqual(ret.weight, 806) 
 
     def test_check_bucket(self):
-        check_bucket_str = ['!W!Vc4h4sAsQs8s8s6s5s3hKh0h3cKcKcQc9c8c2dQd0d0d9d8d8d5',
+        check_bucket_str = ['!W!Vs4c4h4sAsQs8s8s6s5s3hKh0h3cKcKcQc9c8c2dAdQd0d0d9d9d8d8d5',
             'c4d4s0s9s3s2hKhQh9h5h3h2c7c6c3d7d7d6d5d3',
-            '!Vs4sJsJs7s7s6s2hAhQhJhJh8h7h5c6c5dKdQdJd9d6d2',
-            '!Ws4h4sAsKsKs0s9s5hAh0h9h8h7h2dAdAdKd3d2']
+            'sJsJs7s7s6s2hAhQhJhJh8h7h5c6c5dKdQdJd6d2',
+            'h4sAsKsKs0s9s5hAh0h9h8h7h2dAdKd3d2']
         bucket_hands = []
         for i in range(0,4):
             bucket_hands.append(cs(check_bucket_str[i]))
 
-        def is_valid_bucket(cards):
-            cd = shengji_core_foundation._check_bucket(cards,bucket_hands,0,self.trump_card)
-            return cd.action = 
+        def check_bucket(cards_str) :
+            cards = cs(cards_str)
+            return shengji_core_foundation._check_bucket(cards,bucket_hands,0,self.trump_card)
+        def is_valid_bucket(cards_str) -> bool:
+            cd = check_bucket(cards_str)
+            return cd.action == ActionResult.FIRST_PLAY
+    
+        self.assertTrue(is_valid_bucket('cKcKcQc9'))
+        self.assertTrue(is_valid_bucket('dAd9d9d8d8'))
+        self.assertTrue(is_valid_bucket('!W!Vs4c4h4'))
+
+        cd = check_bucket('dQd0d0d9d9d8d8')
+        self.assertTrue(cd.action == ActionResult.FAIL_TO_BUCKET)
+        self.assertListEqual(cd.special_cards, list(cs('dQ')))
+
+        cd = check_bucket('!W!Vs4c4h4s8s8')
+        self.assertEqual(cd.action, ActionResult.FAIL_TO_BUCKET)
+        self.assertListEqual(cd.special_cards, list(cs('s8s8')))
+
+        cd = check_bucket('h4sAs8s8s6')
+        self.assertEqual(cd.action, ActionResult.FAIL_TO_BUCKET)
+        self.assertListEqual(cd.special_cards, list(cs('s6')))
 
     def test_first_play(self):
-        ret = first_play(cs("s8s8"), self.players, 0, self.trump_card)
+        def _first_play(card_str):
+            return first_play(cs(card_str),self.players, 0, self.trump_card)
+
+        ret = _first_play("s8s8")
         self.assertEqual(ret.pattern, Pattern.PAIR)
         self.assertEqual(ret.weight, 8) 
 
+        ret = _first_play("!W")
+        self.assertEqual(ret.pattern, Pattern.SINGLE)
+
+        ret = _first_play("s8c8")
+        self.assertIsNone(ret)
+
+        ret = _first_play("d0d0d9d9d8d8")
+        self.assertEqual(ret.pattern, Pattern.PAIR_STRAIGHT)
+
+        ret = _first_play("dAd0d0d9d9d8d8")
+        self.assertEqual(ret.pattern, Pattern.BUCKET)
+
+        ret = _first_play("dAdQd0d0d8d8")
+        self.assertEqual(ret.action, ActionResult.FAIL_TO_BUCKET)
 
 
 if __name__ == '__main__':
