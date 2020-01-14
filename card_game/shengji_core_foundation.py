@@ -20,6 +20,11 @@ from math import floor
 
 
 """
+
+
+MAIN_NUMBER_WEIGHT = 16
+SUBMAIN_NUMBER_WEIGHT = 15
+
 class ActionResult(enum.IntEnum):
     TEMPORARY = -1 #临时
     FIRST_PLAY = 0
@@ -40,14 +45,9 @@ class Pattern(enum.IntEnum):
     PAIR = 2
     PAIR_STRAIGHT = 3
     BUCKET = 4
+    FAIL_TO_BUCKET = 5
+    OVERTRUMP  = 6
 
-def is_valid_pattern(pattern: Pattern):
-    return pattern != Pattern.INVALID
-
-
-
-MAIN_NUMBER_WEIGHT = 16
-SUBMAIN_NUMBER_WEIGHT = 15
 
 class ShengjiSuit(enum.IntEnum):
     TRUMP = card.Suit.NON_COLOR
@@ -55,24 +55,6 @@ class ShengjiSuit(enum.IntEnum):
     SPADE = card.Suit.SPADE
     CLUB = card.Suit.CLUB
     DIAMOND = card.Suit.DIAMOND
-
-
-def _get_shengji_suit_cards(suit : ShengjiSuit, cards, trump_card)->bytearray:
-    """
-    返回对应升级花色的牌,还是要区分主牌，对吧
-    """
-    ret = []
-    for c in cards:
-        if _shengji_suit(c, trump_card) == suit:
-            ret.append(c)
-    return ret
-
-def _shengji_suit(c, trump_card) -> ShengjiSuit:
-    """根据出的牌判断是什么样的升级花色"""
-    if _is_trump(c, trump_card):
-        return ShengjiSuit.TRUMP
-    else:
-        return card.get_suit(c)
 
 
 class CardDescription:
@@ -84,7 +66,7 @@ class CardDescription:
         self.pattern = Pattern.UNKNOWN
         self.weight = 0 #pattern 与weight配合来比较大小
         self.shengji_suit = ShengjiSuit.TRUMP #花色 主、黑桃、红桃、梅花、方块
-        self.special_cards = None #甩牌失败的部分 或者全部cards，不一定会有，看特定情况
+        self.origin_cards = None #原始的出牌，注意甩牌失败的时候，为强制出牌的部分
 
          
 
@@ -132,32 +114,91 @@ def first_play(cards, hands: list, my_index,  trump_card) -> CardDescription:
     if not _is_consistent(cards, trump_card):
         return None
 
-    cd = CardDescription()
+    cd = None
     cards_length = len(cards)
+
     if cards_length == 1:
-        cd.pattern = Pattern.SINGLE
-        cd.weight = _weight_of_single(cards[0], trump_card)
+        cd = _check_single(cards,trump_card) 
     elif cards_length == 2:
-        if cards[0] == cards[1]:
-            cd.pattern = Pattern.PAIR
-            cd.weight = _weight_of_pair(cards, trump_card)
+        cd = _check_pair(cards, trump_card)
     else:
         # 偶数4个及以上
         cd = _check_pair_straight(cards, trump_card)
 
-    if not cd or cd.pattern == Pattern.UNKNOWN:
+    if not cd:
         cd = _check_bucket(cards, hands, my_index, trump_card)
-    else:
-        cd.action = ActionResult.FIRST_PLAY
     return cd
 
 
 
-def follow_play(cards, first_cd, hand_cards, main_card) -> CardDescription:
+def follow_play(cards, first_cd, hand_cards, trump_card) -> CardDescription:
     """
-    return: None表示出牌无效
+    :param bytearray cards:将要出的牌（已经排过序了），并且已验证过牌都有
+    :param CardDescription first_cd:第一家出牌的描述
+    :param bytearray hand_cards: 自己手里的手牌
+    :param int trump_card:主花色
+    :return: None表示出牌无效，返回一个CardDescription表示有效出牌
     """
-    return None
+    #1 判断数量是否满足要求
+    play_cards_len = len(cards)
+    if play_cards_len != len(first_cd.origin_cards):
+        return None
+    
+    #2 判断花色是否满足要求
+
+    suit_hands = _get_shengji_suit_cards(first_cd.shengji_suit, hand_cards, trump_card)
+    if play_cards_len <= len(suit_hands):
+        #要出的牌必须全部在suit_hands中间
+        if not card.contain_subcard( suit_hands, cards):
+            return None
+        
+        suit_weight_hands = _get_weight_cards(suit_hands, trump_card)
+        #判断模式是否符合要求
+        if first_cd.pattern == Pattern.SINGLE:
+            #单牌总是可以的
+            return _check_single(cards, trump_card)
+        elif first_cd.pattern == Pattern.PAIR:
+            #检查suit_hands里面有没有对子
+            possible_cds = _get_valid_pair_follow(suit_hands,suit_weight_hands)
+            if len(possible_cds):
+                #有对子，则是对子或者无效出牌
+                return _check_pair(cards, trump_card) 
+        elif first_cd.pattern == Pattern.PAIR_STRAIGHT:
+            #检查suit_hands里面有没有拖拉机
+            possible_cds = _get_valid_pair_staight_follow(len(first_cd.origin_cards), \
+                suit_hands,suit_weight_hands)
+            if len(possible_cds):
+                return _check_pair_straight(cards, trump_card)
+            else:
+                #没有符合要求的拖拉机，那么必须要有对子出对子
+                possible_cds = _get_valid_pair_follow(suit_hands,suit_weight_hands)
+                if len(possible_cds):
+                    #必须满足对子的要求       
+        else:
+            #第一个出牌甩牌的情形，必须有对出对，有拖拉机出拖拉机
+            return _check_bucket_follow(first_cd, suit_hands, suit_weight_hands, trump_card)
+
+        
+
+    else:
+        #牌数量不足，属于要不起或者毙了的情况
+        if not card.contain_subcard(cards, suit_hands):
+            #suit_hands必须要在cards里面，全部出出去
+            return None
+
+        # 判断是毙了还是一般的弃牌
+        # 毙了的要求是first_cd为副，我全是主（一致性满足），且模式也能够对应的上
+        if first_cd.shengji_suit != ShengjiSuit.TRUMP and \
+            _is_all_trump(cards, trump_card):
+            pass
+    
+    #没有返回None和有效cd的情况，剩下就是弃牌了
+    cd = CardDescription()
+    cd.pattern = Pattern.DISCARD
+    cd.origin_cards = list(cards)
+    return cd
+
+
 
 
 def round_over(cd_list:list, first_index: int, host_index: int) -> bool :
@@ -186,6 +227,27 @@ def decide_point(cards_list: list, host_index: int, great_index: int):
     """
     pass
 
+
+
+def _get_shengji_suit_cards(suit : ShengjiSuit, cards, trump_card)->bytearray:
+    """
+    返回对应升级花色的牌,还是要区分主牌，对吧
+    """
+    ret = []
+    for c in cards:
+        if _shengji_suit(c, trump_card) == suit:
+            ret.append(c)
+    return ret
+
+def _shengji_suit(c, trump_card) -> ShengjiSuit:
+    """根据出的牌判断是什么样的升级花色"""
+    if _is_trump(c, trump_card):
+        return ShengjiSuit.TRUMP
+    else:
+        return card.get_suit(c)
+
+
+
 def _is_trump(c, trump_card) -> bool:
     """判断是否为主，不为主即为副"""
     return c in card.JOKERS or \
@@ -193,7 +255,7 @@ def _is_trump(c, trump_card) -> bool:
         card.get_suit(c) == card.get_suit(trump_card)
 
 def _is_all_trump(cards, trump_card) -> bool:
-    return bool
+    return all(_is_trump(c trump_card) for c in cards)
 
 
 def _is_consistent(cards, trump_card) -> bool:
@@ -225,10 +287,28 @@ def _weight_of_single(c, trump_card):
 def _weight_of_pair(cards, main_color):
     return _weight_of_single(cards[0], main_color)
 
+
+def _check_single(cards, trump_card):
+    """生成单牌的cd"""
+    cd = CardDescription()
+    cd.pattern = Pattern.SINGLE
+    cd.weight = _weight_of_single(cards[0], trump_card)
+    cd.origin_cards = list(cards)
+    return cd 
+
+def _check_pair(cards, trump_card):
+    if cards[0] == cards[1]:
+        cd = CardDescription()
+        cd.pattern = Pattern.PAIR
+        cd.weight = _weight_of_pair(cards, trump_card)
+        cd.origin_cards = list(cards)
+        return cd
+
 def _check_pair_straight(cards, trump_card) -> CardDescription:
     """判断是否为拖拉机（已经确保全副或全主了）
         先确保两两相等
-        载确保全副或者全主,
+        然后再确保连续
+    :return:None表示不是拖拉机
     """
     card_len = len(cards)
     if card_len >= 4 and not card_len % 2:
@@ -244,6 +324,7 @@ def _check_pair_straight(cards, trump_card) -> CardDescription:
             cd = CardDescription()
             cd.pattern = Pattern.PAIR_STRAIGHT
             cd.weight = card_len*100+weights[0]
+            cd.origin_cards = list(cards)
             return cd
 
 def _check_bucket(cards, hands, my_index, trump_card)-> CardDescription:
@@ -287,11 +368,11 @@ def _check_bucket(cards, hands, my_index, trump_card)-> CardDescription:
         if len(single_pair) == 1:
             cd.pattern = Pattern.PAIR
             cd.weight = _weight_of_single(single_pair[0],trump_card)
-            cd.special_cards = long_cards
+            cd.origin_cards = long_cards
         else:
             cd.pattern = Pattern.PAIR_STRAIGHT
             cd.weight = 200*len(single_pair) + _weight_of_single(single_pair[0], trump_card) 
-            cd.special_cards = long_cards
+            cd.origin_cards = long_cards
         
         cd.shengji_suit = current_shengji_suit
         return cd
@@ -302,7 +383,7 @@ def _check_bucket(cards, hands, my_index, trump_card)-> CardDescription:
         cd.pattern = Pattern.SINGLE
         cd.weight = _weight_of_single(single_cards[-1], trump_card)
         cd.shengji_suit = current_shengji_suit 
-        cd.special_cards = [single_cards[-1]]
+        cd.origin_cards = [single_cards[-1]]
         final_split_cd.append(cd)
     
     for ps in reversed(split_pair_straight):
@@ -373,15 +454,25 @@ def _check_bucket(cards, hands, my_index, trump_card)-> CardDescription:
     cd = CardDescription()
     if min_cd:
         cd.action = ActionResult.FAIL_TO_BUCKET
-        cd.special_cards = min_cd.special_cards
+        cd.origin_cards = min_cd.origin_cards
     else:
         cd.action = ActionResult.FIRST_PLAY
         cd.pattern = Pattern.BUCKET
     return cd 
 
 
+def _check_bucket_follow():
+    """检查甩牌的跟牌
+    前提：手牌该类花色数量大于所需出牌数
+    :param CardDescription first_cd
+    :return: None无效出牌；CardDescription pattern DISCARD, 正常的弃牌
+    """
+    #需要将甩牌进行分析 分析出一系列的组合，然后从长度最大的Pattern开始，寻找可能的匹配xiang
+
 def _get_valid_pair_follow(origin_cards, weight_cards):
     """获得有效的对子跟牌--->这个还可用于托管程序中,最大的cd在前面
+    :param list origin_cards: 原始牌
+    :return: 返回的是一个cd list，
     """
     ret = []
     #最多两个牌相等
@@ -455,37 +546,8 @@ def _split_single_and_pair(cards):
     return (single_cards, double_cards)
 
 
-def _card_description_of_two(cards, main_color):
-    cd = CardDescription()
-    if cards[0] == cards[1]:
-        cd.pattern = Pattern.PAIR
-        cd.weight = _weight_of_single(cards, main_color)
-    return cd
-
-def _get_static_card_description(cards, main_color):
-    """
-    静态检查，看看是哪种类型，
-    :param cards: 已确保长度大于0
-    :return:
-    """
-    cards_len = len(cards)
-    cd = CardDescription()
-    if cards_len == 1:
-        cd.pattern = Pattern.SINGLE
-        cd.weight = _weight_of_single(cards, main_color)
-    elif cards_len == 2:
-        cd = _card_description_of_two(cards, main_color)
-    elif (cards_len % 2) == 0:
-        #判断是否为拖拉机
-        pass
-    else:
-        #耍牌的情形
-        pass
-    return cd
-
-
 def _get_weight_cards(cards, trump_card) -> list:
-    """返回对应单牌的权重，注意权重一致并不能说明是一样的牌（都是副2的情况）"""
+    """返回对应单牌的权重列表，注意权重一致并不能说明是一样的牌（都是副2的情况）"""
     return list(map(lambda c: _weight_of_single(c, trump_card), cards))
 
 

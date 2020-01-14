@@ -103,7 +103,7 @@ class CoreDoudizhu:
         """
         if p_index == self._get_current_turn():
             if cards:
-                if card.bin_cards_has_subcards(self.playerHand[p_index], cards):
+                if card.contain_subcard( self.playerHand[p_index],cards):
                     ret = doudizhu_match.check_valuable_play(cards, self._previous_cd())
                     if ret:
                         card.bin_cards_remove_some(self.playerHand[p_index], cards)

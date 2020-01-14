@@ -106,15 +106,15 @@ class ShengjiCoreFoundationTest(unittest.TestCase):
 
         cd = check_bucket('dQd0d0d9d9d8d8')
         self.assertTrue(cd.action == ActionResult.FAIL_TO_BUCKET)
-        self.assertListEqual(cd.special_cards, list(cs('dQ')))
+        self.assertListEqual(cd.origin_cards, list(cs('dQ')))
 
         cd = check_bucket('!W!Vs4c4h4s8s8')
         self.assertEqual(cd.action, ActionResult.FAIL_TO_BUCKET)
-        self.assertListEqual(cd.special_cards, list(cs('s8s8')))
+        self.assertListEqual(cd.origin_cards, list(cs('s8s8')))
 
         cd = check_bucket('h4sAs8s8s6')
         self.assertEqual(cd.action, ActionResult.FAIL_TO_BUCKET)
-        self.assertListEqual(cd.special_cards, list(cs('s6')))
+        self.assertListEqual(cd.origin_cards, list(cs('s6')))
 
     def test_first_play(self):
         def _first_play(card_str):

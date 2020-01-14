@@ -133,13 +133,17 @@ def bin_cards_from_base64(base64_cards):
 
 
 def bin_cards_remove_some(cards, deal):
-    if bin_cards_has_subcards(cards, deal):
+    if contain_subcard(deal, cards):
         for c in deal:
             cards.remove(c)
         return True
 
 
-def bin_cards_has_subcards(cards, deal):
+def contain_subcard(deal, subcard):
+    """判断是否有该子牌
+    :param bytearray subcard: 子牌
+    :param bytearray deal: 父牌
+    """
     backup = list(cards)
     try:
         for c in deal:
