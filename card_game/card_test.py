@@ -33,7 +33,7 @@ print(card.bin_card_to_terminal_output(orgin_cards))
 
 ## some
 before_remove = list(card.ONE_DECK)
-is_remove = card.bin_cards_remove_some(before_remove, bin_cards)
+is_remove = card.remove_subcard(before_remove, bin_cards)
 print(card.bin_card_to_terminal_output(before_remove))
 
 

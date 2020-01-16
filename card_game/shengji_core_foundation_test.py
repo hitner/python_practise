@@ -1,5 +1,5 @@
 import shengji_core_foundation
-from shengji_core_foundation import Pattern, first_play, follow_play, ActionResult
+from shengji_core_foundation import Pattern, first_play, follow_play
 import card
 import unittest
 
@@ -37,10 +37,10 @@ c4d4s0s9s3s2hKhQh9h5h3h2cAcQcJcJc0c7c6c3d7d7d6d5d3
 class ShengjiCoreFoundationTest(unittest.TestCase):
     """每个牌型检查的test"""
     trump_card = cs('s4')[0]
-    player_str = ['!W!Vc4h4sAsQs8s8s6s5s3hKh0h3cKc9c8c2dQd0d0d9d9d8d8d5',
+    player_str = ['!W!Wc4h4sAsQs8s8s6s5s3hKh0h3cKc9c8c2dAd0d0d9d9d8d8d5',
         'c4d4s0s9s3s2hKhQh9h5h3h2cAcQcJcJc0c7c6c3d7d7d6d5d3',
         '!Vs4sJsJs7s7s6s2hAhQhJhJh8h7h5cQc0c6c5dKdQdJd6d2',
-        '!Ws4h4sAsKsKs0s9s5hAh0h9h8h7h2cKc9c8c5c2dAdAdKd3d2']
+        '!Vs4h4sAsKsKs0s9s5hAh0h9h8h7h2cKc9c8c5c2dKdQd3d2']
     players = []
     for i in range(0,4):
         hands = cs(player_str[i])
@@ -98,46 +98,94 @@ class ShengjiCoreFoundationTest(unittest.TestCase):
             return shengji_core_foundation._check_bucket(cards,bucket_hands,0,self.trump_card)
         def is_valid_bucket(cards_str) -> bool:
             cd = check_bucket(cards_str)
-            return cd.action == ActionResult.FIRST_PLAY
+            return cd.pattern == Pattern.BUCKET
     
         self.assertTrue(is_valid_bucket('cKcKcQc9'))
         self.assertTrue(is_valid_bucket('dAd9d9d8d8'))
         self.assertTrue(is_valid_bucket('!W!Vs4c4h4'))
 
         cd = check_bucket('dQd0d0d9d9d8d8')
-        self.assertTrue(cd.action == ActionResult.FAIL_TO_BUCKET)
+        self.assertTrue(cd.pattern == Pattern.FAIL_TO_BUCKET)
         self.assertListEqual(cd.origin_cards, list(cs('dQ')))
 
         cd = check_bucket('!W!Vs4c4h4s8s8')
-        self.assertEqual(cd.action, ActionResult.FAIL_TO_BUCKET)
+        self.assertEqual(cd.pattern, Pattern.FAIL_TO_BUCKET)
         self.assertListEqual(cd.origin_cards, list(cs('s8s8')))
 
         cd = check_bucket('h4sAs8s8s6')
-        self.assertEqual(cd.action, ActionResult.FAIL_TO_BUCKET)
+        self.assertEqual(cd.pattern, Pattern.FAIL_TO_BUCKET)
         self.assertListEqual(cd.origin_cards, list(cs('s6')))
 
-    def test_first_play(self):
-        def _first_play(card_str):
-            return first_play(cs(card_str),self.players, 0, self.trump_card)
 
-        ret = _first_play("s8s8")
+    def _first_play(self, card_str):
+        return first_play(cs(card_str),self.players, 0, self.trump_card)
+
+    def test_first_play(self):
+        
+
+        ret = self._first_play("s8s8")
         self.assertEqual(ret.pattern, Pattern.PAIR)
         self.assertEqual(ret.weight, 8) 
 
-        ret = _first_play("!W")
+        ret = self._first_play("!W")
         self.assertEqual(ret.pattern, Pattern.SINGLE)
 
-        ret = _first_play("s8c8")
+        ret = self._first_play("s8c8")
         self.assertIsNone(ret)
 
-        ret = _first_play("d0d0d9d9d8d8")
+        ret = self._first_play("d0d0d9d9d8d8")
         self.assertEqual(ret.pattern, Pattern.PAIR_STRAIGHT)
 
-        ret = _first_play("dAd0d0d9d9d8d8")
+        ret = self._first_play("dAd0d0d9d9d8d8")
         self.assertEqual(ret.pattern, Pattern.BUCKET)
 
-        ret = _first_play("dAdQd0d0d8d8")
-        self.assertEqual(ret.action, ActionResult.FAIL_TO_BUCKET)
+        ret = self._first_play("dAdQd0d0d8d8")
+        self.assertEqual(ret.pattern, Pattern.FAIL_TO_BUCKET)
+
+
+    def _index1_follow(self, first_str, follow_str):
+        """固定是第一个人的跟牌"""
+        first_cd = self._first_play(first_str)
+        return shengji_core_foundation.follow_play(cs(follow_str),first_cd, \
+             self.players[1], self.trump_card)
+
+    def _custom_follow(self, first_str, follow_str, custom_hands):
+        """自定义的手牌跟牌，用于测试一些特殊情况"""
+        first_cd = self._first_play(first_str)
+        return shengji_core_foundation.follow_play(cs(follow_str),first_cd, \
+             cs(custom_hands), self.trump_card)
+
+    def test_normal_follow(self):
+        """单牌/对子/拖拉机的跟牌"""
+        ret = self._index1_follow('dQ','d5')
+        self.assertEqual(ret.pattern, Pattern.SINGLE)
+
+        ret = self._index1_follow('d0d0','d7d7')
+        self.assertEqual(ret.pattern, Pattern.PAIR)  
+
+        ret = self._index1_follow('d0d0d9d9','d7d7d5d3')
+        self.assertEqual(ret.pattern, Pattern.DISCARD)      
+        
+    def test_bucket_follow(self):
+        """甩牌的跟牌"""
+        ret = self._index1_follow('dAd0d0d9d9d8d8','c6c3d7d7d6d5d3')
+        self.assertEqual(ret.pattern, Pattern.DISCARD)
+
+        ret = self._index1_follow('dAd0d0d9d9d8d8','c4d4s0s9s3s2hK')
+        self.assertEqual(ret, None)  
+
+        ret = self._custom_follow('dAdAdQdQ', 'd0d0d9d9', 'dKd0d0d9d9d3')
+        self.assertEqual(ret.pattern, Pattern.DISCARD) 
+
+        ret = self._custom_follow('dAdAdKdQdQ', 'dKd0d0d9d3', 'dKd0d0d9d8d7d3')
+        self.assertEqual(ret.pattern, Pattern.DISCARD) 
+
+        ret = self._custom_follow('dAdAdQdQ', 'd0d0d9d3', 'dKdQd0d0d9d9d3')
+        self.assertEqual(ret, None) 
+
+        ret = self._custom_follow('dAdK', 'd9d3', 'dKd0d0d9d8d7d3')
+        self.assertEqual(ret.pattern, Pattern.DISCARD) 
+
 
 
 if __name__ == '__main__':

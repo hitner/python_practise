@@ -45,7 +45,7 @@ s2  ... s0 sJ sQ sK sA
 
 ## python中展示
 
-若不加特定说明，全部为bytearray
+若不加特定说明，全部为bytearray 好像是一个错误，用list可能更加的方便，确定是可修改很容易被改掉了
 
 ## 传输编码
 有两种，base16 或者 base64，为了简单起见，还是之间base16 节约多少?

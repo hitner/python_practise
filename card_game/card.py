@@ -132,26 +132,42 @@ def bin_cards_from_base64(base64_cards):
     return base64.b64decode(base64_cards)
 
 
-def bin_cards_remove_some(cards, deal):
-    if contain_subcard(deal, cards):
-        for c in deal:
-            cards.remove(c)
-        return True
+def remove_subcard(total, subcard):
+    """移除部分牌 直接修改total, total 应该已经确认包含subcards
+    :return: None
+    """
+    assert(contain_subcard(total, subcard))
+    for c in subcard:
+        total.remove(c)
 
+def new_after_remove(total, subcards):
+    """生成新的list,原total不修改"""
+    new_list = list(total)
+    remove_subcard(new_list, subcards)
+    return new_list
 
-def contain_subcard(deal, subcard):
+def contain_subcard(totoal, subcard):
     """判断是否有该子牌
     :param bytearray subcard: 子牌
     :param bytearray deal: 父牌
     """
-    backup = list(cards)
+    backup = list(totoal)
     try:
-        for c in deal:
+        for c in subcard:
             backup.remove(c)
     except ValueError:
         return False
     return True
 
+
+def is_equal(left, right):
+    """判断两手牌是否相等"""
+    if len(left) == len(right):
+        for i in range(0, len(left)):
+            if left[i] != right[i]:
+                return False
+        return True
+    return False
 
 def sort_by_doudizhu_rule(cards) -> bytearray:
     """

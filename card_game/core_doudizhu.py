@@ -106,7 +106,7 @@ class CoreDoudizhu:
                 if card.contain_subcard( self.playerHand[p_index],cards):
                     ret = doudizhu_match.check_valuable_play(cards, self._previous_cd())
                     if ret:
-                        card.bin_cards_remove_some(self.playerHand[p_index], cards)
+                        card.remove_subcard(self.playerHand[p_index], cards)
                         self._deadwood += cards
                         self.__add_playing_track(p_index, cards, ret)
                         return self.playingTrack[-1].copy()
