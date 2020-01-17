@@ -1,6 +1,6 @@
 import card
 import enum
-from math import floor
+from math import floor,pow
 from itertools import combinations
 
 """提供基础函数来判断牌型、大小关系等基础行为
@@ -55,11 +55,6 @@ class CardDescription:
         self.bucket_structure = None #可选 甩牌的结构;结构长的在前面
         self.remain_same_suit = None #可选 剩余的同花色牌,用于甩牌的跟牌判断中
 
-         
-
-
-#对外接口
-
 
 class RoundResult:
     """一轮出牌的结果
@@ -70,7 +65,7 @@ class RoundResult:
     def __init__(self):
         self.max_index = -1
         self.point = 0 
-        self.point_cards = []
+        self.point_cards = None
 
 
 def sort_by_shengji(cards, trump_card) -> list:
@@ -187,32 +182,55 @@ def follow_play(cards, first_cd, hand_cards, trump_card) -> CardDescription:
 
 
 
-def round_over(cd_list:list, first_index: int, host_index: int) -> bool :
+def round_over(cd_list:list, first_index: int, host_index: int) -> RoundResult :
+    """一轮出牌结束后的结果,得分和谁最大
+    :return: RoundResult
     """
-    一轮出牌结束后的结果对比
-    """
-    return True
+    def score(x:CardDescription):
+        if x.pattern == Pattern.DISCARD:
+            return -1000
+        elif x.pattern == Pattern.OVERTRUMP:
+            return 1000+x.weight
+        else:
+            return x.weight
+
+    max_index = cd_list.index(max(cd_list, key=score))
+
+    rr = RoundResult()
+    rr.max_index = max_index
+    if max_index == host_index or ((max_index+2)%4) == host_index:
+        rr.point = 0
+    else:
+        totoal = []
+        for i in range(0,4):
+            totoal += cd_list[_next_index(first_index,i)].origin_cards
+        (rr.point, rr.point_cards) = card.calculate_score(totoal)
+    
+    return rr
+    
 
 
-def dig_point(big_cd, back_cards) -> int:
-    """big_cd :最后一轮出牌
+def dig_point(first_cd:CardDescription, back_cards) -> (int,int):
+    """在扣底的前提下，计算扣底得分数和倍数
+    
+    :param CardDescription first_cd :最后一轮出牌的第一个cd
+    :param list back_cards: 底牌
     """
+    point, point_cards = card.calculate_score(back_cards)
 
+    multiplier = 0
+    decisive = first_cd
+    if first_cd.pattern == Pattern.BUCKET:
+        decisive = first_cd.bucket_structure[0]
 
-def compare_cd(cd_list: list) -> int:
-    """
-    cd_list: 第一个人的出牌放在前面
-    比较cd_list中的cd，返回最大的那个牌的序号，
-    """
-    pass
+    if decisive.pattern == Pattern.SINGLE:
+        multiplier = 2
+    elif decisive.pattern == Pattern.PAIR:
+        multiplier = 4
+    elif decisive.pattern == Pattern.PAIR_STRAIGHT:
+        multiplier = pow(2,len(decisive.origin_cards)/2+1)
 
-
-def decide_point(cards_list: list, host_index: int, great_index: int):
-    """
-    根据出牌编号，和大牌编号得出得分与否返回一个pair.(cards, point),即得分牌和总分
-    """
-    pass
-
+    return (point*multiplier, multiplier)
 
 def possible_follow_to(cd, hands, tr):
     """注意与valid_follow的区别,这里弃牌也算是一种可能
@@ -314,6 +332,9 @@ def _is_play_in_possible(cards, possible_cds) -> bool:
             return True
     return False
     
+
+def _next_index(start, append):
+    return (start+append)%4
 
 
 def _get_shengji_suit_cards(suit : ShengjiSuit, cards, trump_card)->list:
@@ -502,7 +523,7 @@ def _check_overtrump_follow(cards:list, first_cd: CardDescription, trump_card:in
     """
     cd = None
     if first_cd.pattern == Pattern.SINGLE:
-        cd = _check_pair(cards, trump_card)
+        cd = _check_single(cards, trump_card)
     elif first_cd.pattern == Pattern.PAIR:
         cd = _check_pair(cards, trump_card)
     elif first_cd.pattern == Pattern.PAIR_STRAIGHT:

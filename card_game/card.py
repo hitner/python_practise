@@ -14,18 +14,22 @@ SUIT_SHIFT = 5
 WEIGHT_BITMASK = 0x1F
 
 NUMBER2 = 2
-ACE = 14
+
+WEIGHT_QUEEN = 12
+WEIGHT_KING = 13
+WEIGHT_ACE = 14
 # 15 16 为保留值
 BLACK_JOKER = 17
 RED_JOKER = 18
 
-DIAMOND = list(range(NUMBER2, ACE+1))
+DIAMOND = list(range(NUMBER2, WEIGHT_ACE+1))
 CLUB =  [ (x | 0b0100000) for x in DIAMOND]
 HEART = [ (x | 0b1000000) for x in DIAMOND]
 SPADE = [ (x | 0b1100000) for x in DIAMOND]
 JOKERS = [BLACK_JOKER, RED_JOKER]
-ONE_DECK = bytes(DIAMOND + CLUB + HEART + SPADE + JOKERS)
-DOUBLE_DECK = bytes(ONE_DECK + ONE_DECK)
+ONE_DECK = DIAMOND + CLUB + HEART + SPADE + JOKERS
+DOUBLE_DECK = ONE_DECK + ONE_DECK
+SCORE_WEIGHT_CARDS = [5, 10, WEIGHT_KING]
 
 _card_terminal_char = ['2','3','4','5','6','7','8','9','0','J','Q','K','A','V','W']
 _card_bin_char = DIAMOND + JOKERS
@@ -64,11 +68,11 @@ def _one_bin_card_from(terminal_input):
     return (color_value << SUIT_SHIFT) + char_value
 
 
-def bin_card_from_terminal_string(terminal_inputs):
+def bin_card_from_terminal_string(terminal_inputs) -> list:
     if len(terminal_inputs)%2 or len(terminal_inputs) == 0: #为奇数或为空
         return None
     try:
-        ret = bytearray()
+        ret = []
         for i in range(0, len(terminal_inputs), 2):
             ret.append(_one_bin_card_from(terminal_inputs[i:i+2]))
         return ret
@@ -168,6 +172,20 @@ def is_equal(left, right):
                 return False
         return True
     return False
+
+
+def calculate_score(cards:list) -> tuple:
+    """返回一个(int, list)的结构体"""
+    totoal = 0
+    ret = []
+    for c in cards:
+        weight = c & WEIGHT_BITMASK
+        if weight in SCORE_WEIGHT_CARDS:
+            if weight == WEIGHT_KING:
+                weight = 10 
+            totoal += weight
+            ret.append(c)
+    return (totoal, ret)
 
 def sort_by_doudizhu_rule(cards) -> bytearray:
     """

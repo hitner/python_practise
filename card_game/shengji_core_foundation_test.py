@@ -1,5 +1,5 @@
 import shengji_core_foundation
-from shengji_core_foundation import Pattern, first_play, follow_play
+from shengji_core_foundation import Pattern, first_play, follow_play, dig_point,round_over, RoundResult
 import card
 import unittest
 
@@ -45,7 +45,7 @@ class ShengjiCoreFoundationTest(unittest.TestCase):
     for i in range(0,4):
         hands = cs(player_str[i])
         players.append(hands)
-    bottoms = cs('d4sQh6h6cAc7c3dJ')
+    bottoms = cs('d4sQh5h0cAcKc3dJ')
 
 
 
@@ -155,6 +155,10 @@ class ShengjiCoreFoundationTest(unittest.TestCase):
         return shengji_core_foundation.follow_play(cs(follow_str),first_cd, \
              cs(custom_hands), self.trump_card)
 
+    def _follow_at_index(self, first_cd, follow_str,index):
+        return follow_play(cs(follow_str), first_cd, \
+             self.players[index], self.trump_card)
+
     def test_normal_follow(self):
         """单牌/对子/拖拉机的跟牌"""
         ret = self._index1_follow('dQ','d5')
@@ -185,6 +189,68 @@ class ShengjiCoreFoundationTest(unittest.TestCase):
 
         ret = self._custom_follow('dAdK', 'd9d3', 'dKd0d0d9d8d7d3')
         self.assertEqual(ret.pattern, Pattern.DISCARD) 
+
+    def test_overtrump_follow(self):
+        """毙了的情况"""
+        hands = '!W!Wc4d4d4sAsAs0s9s3s2s2hKhQh9h5h3h2cAcQcJcJc0c7c6c3'
+
+        def weight(c_str):
+            return shengji_core_foundation._weight_of_single(cs(c_str)[0],self.trump_card)
+        ret = self._custom_follow('d5', 's2', hands)
+        self.assertEqual(ret.pattern, Pattern.OVERTRUMP)
+        self.assertEqual(ret.weight, weight('s2'))
+
+        ret = self._custom_follow('dAdA', 'c4d4', hands)
+        self.assertEqual(ret.pattern, Pattern.DISCARD)
+
+        ret = self._custom_follow('d3d3', '!W!W', hands)
+        self.assertEqual(ret.pattern, Pattern.OVERTRUMP)  
+        self.assertEqual(ret.weight, weight('!W'))
+
+        ret = self._custom_follow('dAdAdKdJdJ', '!Wd4d4s2s2', hands)
+        self.assertEqual(ret.pattern, Pattern.OVERTRUMP)  
+        self.assertEqual(ret.weight, weight('d4'))
+
+
+        ret = self._custom_follow('d5d5d3d3', 'd4d4sAsA', hands)
+        self.assertEqual(ret.pattern, Pattern.OVERTRUMP)
+
+    def test_round_over(self):
+        first_cd = self._first_play('d8d8')
+
+        cd2 = self._follow_at_index(first_cd, 'd7d7',1)
+        cd3 = self._follow_at_index(first_cd, 'dKd6',2)
+        cd4 = self._follow_at_index(first_cd, 'dKdQ',3)
+
+        ret = round_over([first_cd, cd2, cd3, cd4],0,1)
+        self.assertEqual(ret.max_index, 0)
+        self.assertEqual(ret.point, 20)
+        self.assertListEqual(ret.point_cards, cs('dKdK'))
+
+        
+        first_cd = self._first_play('c4')
+
+        cd2 = self._follow_at_index(first_cd, 's0',1)
+        cd3 = self._follow_at_index(first_cd, '!V',2)
+        cd4 = self._follow_at_index(first_cd, 's5',3)
+
+        ret = round_over([first_cd, cd2, cd3, cd4],1,0)
+        self.assertEqual(ret.max_index, 2)
+        self.assertEqual(ret.point, 0)
+        self.assertEqual(ret.point_cards, None)
+
+
+    def test_dig_point(self):
+        def _dig(card_str):
+            first_cd = self._first_play(card_str)
+            return dig_point(first_cd,self.bottoms)
+
+        ret = _dig('c4')
+        self.assertTupleEqual(ret, (50,2))
+
+        ret = _dig('dAd0d0d9d9d8d8')
+        self.assertTupleEqual(ret, (25*16,16))
+
 
 
 

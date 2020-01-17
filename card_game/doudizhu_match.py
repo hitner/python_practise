@@ -120,7 +120,7 @@ def _check_bomb(cards):
                 pre = cards[i]
             else:
                 return None
-        if pre <= card.ACE:
+        if pre <= card.WEIGHT_ACE:
             return CardDescription(len(cards), cards[0])
 
 
@@ -135,7 +135,7 @@ def _check_single_straight_(cards):
             pre = cards[i]
         else:
             return None
-    if pre <= card.ACE:
+    if pre <= card.WEIGHT_ACE:
         return CardDescription(100 + len(cards), cards[0])
 
 
@@ -152,7 +152,7 @@ def _check_pair_straight(cards):
                 pre = cards[i]
             else:
                 return None
-        if pre <= card.ACE:
+        if pre <= card.WEIGHT_ACE:
             return CardDescription(200 + len(cards), cards[0])
 
 
