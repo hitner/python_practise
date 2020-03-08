@@ -1,7 +1,7 @@
 from tornado.web import RequestHandler
 import json
 import asyncio
-import http_base_handler
+from server_common import http_base_handler
 import set_manager
 
 

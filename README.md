@@ -1,5 +1,9 @@
 # my_python_practise
 
+
+数据文件放在/var/www/rw 下面 都将所有权限改为777
+静态文件 /var/www/static 下面
+
 ## ai2048
 - 提供2048的初始化和移动操作
 - 提供2种简单的自动移动策略

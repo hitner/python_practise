@@ -5,7 +5,6 @@ import sys
 import os
 from tornado.log import gen_log, app_log
 import logging
-sys.path.append(os.path.join(os.pardir, 'server_common'))
 
 import http_test_handler
 import set_manager
